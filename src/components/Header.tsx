@@ -76,6 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               key={t.symbol}
               onClick={() => onSelectTicker(t)}
+              title={`Switch symbol to ${t.symbol} (${t.name}) — Base Price: ${t.currency}${t.initialPrice.toFixed(2)}, Lot: ${t.lotSize}`}
               className={`px-3 py-1 rounded text-xs font-bold transition-all ${
                 currentTicker.symbol === t.symbol
                   ? "bg-amber-500 text-slate-950 shadow-sm"
@@ -170,6 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               key={s}
               onClick={() => onChangeSpeed(s)}
+              title={`Set simulation speed to ${s}x rate`}
               className={`px-2 py-0.5 rounded text-xs transition-colors ${
                 speed === s
                   ? "bg-indigo-600 text-white font-bold"
@@ -184,6 +186,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Play/Pause */}
         <button
           onClick={onTogglePlay}
+          title={isRunning ? "Pause the real-time simulation" : "Resume the real-time simulation"}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md ${
             isRunning
               ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
@@ -204,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Reset */}
         <button
           onClick={onReset}
-          title="Reset Simulation"
+          title="Reset simulation, cash, inventory, and order book to initial state"
           className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 transition-colors"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -213,6 +216,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Guide / Tutorial button */}
         <button
           onClick={onOpenGuide}
+          title="Open educational guide explaining Market Making, the spread, and Avellaneda-Stoikov skew"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-xs text-amber-400 font-medium transition-colors"
         >
           <BookOpen className="w-3.5 h-3.5" />

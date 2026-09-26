@@ -39,7 +39,8 @@ export const EducationalModal: React.FC<EducationalModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            title="Close educational modal"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -181,7 +182,8 @@ export const EducationalModal: React.FC<EducationalModalProps> = ({
         <div className="px-6 py-3 bg-slate-950 border-t border-slate-800 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-md shadow-amber-500/20"
+            title="Close guide and enter trading terminal"
+            className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-md shadow-amber-500/20 cursor-pointer"
           >
             Start Trading Simulation
           </button>

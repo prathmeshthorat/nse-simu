@@ -408,6 +408,7 @@ export const Chart: React.FC<ChartProps> = ({
           <div className="flex items-center bg-slate-800 rounded-md p-0.5 border border-slate-700/60">
             <button
               onClick={() => setChartType("candles")}
+              title="Switch chart view to Japanese Candlesticks with OHLC wicks and bodies"
               className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors ${
                 chartType === "candles"
                   ? "bg-indigo-600 text-white"
@@ -419,6 +420,7 @@ export const Chart: React.FC<ChartProps> = ({
             </button>
             <button
               onClick={() => setChartType("line")}
+              title="Switch chart view to continuous Line & gradient area chart"
               className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors ${
                 chartType === "line"
                   ? "bg-indigo-600 text-white"
@@ -433,6 +435,7 @@ export const Chart: React.FC<ChartProps> = ({
           {/* Indicators Toggle */}
           <button
             onClick={() => setShowFairValue(!showFairValue)}
+            title="Toggle latent theoretical Fair Value line (dashed gold)"
             className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors ${
               showFairValue
                 ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
@@ -445,6 +448,7 @@ export const Chart: React.FC<ChartProps> = ({
 
           <button
             onClick={() => setShowQuotes(!showQuotes)}
+            title="Toggle Market Maker Limit Bid (green) and Ask (red) quote bands on the chart"
             className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors ${
               showQuotes
                 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"

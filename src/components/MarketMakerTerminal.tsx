@@ -96,7 +96,10 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold">
+          <label
+            title="Toggle autonomous algorithmic quoting based on the Avellaneda-Stoikov model"
+            className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+          >
             <input
               type="checkbox"
               checked={config.autoQuoting}
@@ -304,7 +307,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             </span>
             <button
               onClick={onFlattenPosition}
-              className="px-2 py-1 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-1"
+              title="Emergency liquidation: instantly fire market orders to bring net inventory back to 0 (flat)"
+              className="px-2 py-1 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-1 cursor-pointer"
             >
               <Flame className="w-3 h-3 text-rose-400" /> Flatten Position
             </button>
@@ -329,6 +333,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 onChange={(e) =>
                   onUpdateConfig({ halfSpreadTicks: parseInt(e.target.value) })
                 }
+                title={`Half-spread distance: ${config.halfSpreadTicks} ticks from reservation price`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <span className="text-[9px] text-slate-500 block">
@@ -356,6 +361,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                     inventorySkewFactor: parseFloat(e.target.value),
                   })
                 }
+                title={`Inventory Skew Gamma (γ): ${config.inventorySkewFactor.toFixed(2)}`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
               <span className="text-[9px] text-slate-500 block">
@@ -381,6 +387,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 onChange={(e) =>
                   onUpdateConfig({ quoteSize: parseInt(e.target.value) })
                 }
+                title={`Quote Size: ${config.quoteSize} shares per side`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
             </div>
@@ -395,7 +402,10 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                   Market sweep if inv &gt; threshold
                 </span>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label
+                title="Automatically hedge unhedged positions when inventory exceeds risk threshold"
+                className="relative inline-flex items-center cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={config.autoHedge}
@@ -430,6 +440,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
               <div className="grid grid-cols-2 gap-1">
                 <button
                   onClick={() => setManualSide("BUY")}
+                  title="Select BUY side for manual order ticket"
                   className={`py-1 rounded text-xs font-bold transition-colors ${
                     manualSide === "BUY"
                       ? "bg-emerald-600 text-white shadow-sm"
@@ -440,6 +451,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 </button>
                 <button
                   onClick={() => setManualSide("SELL")}
+                  title="Select SELL side for manual order ticket"
                   className={`py-1 rounded text-xs font-bold transition-colors ${
                     manualSide === "SELL"
                       ? "bg-rose-600 text-white shadow-sm"
@@ -462,6 +474,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 onChange={(e) =>
                   setManualPrice(parseFloat(e.target.value) || 0)
                 }
+                title={`Target price in ₹ (tick size: ${ticker.tickSize})`}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -478,6 +491,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 onChange={(e) =>
                   setManualSize(parseInt(e.target.value) || ticker.lotSize)
                 }
+                title={`Order quantity in shares (lot size: ${ticker.lotSize})`}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -486,7 +500,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               onClick={() => handleManualSubmit("LIMIT")}
-              className={`py-1.5 rounded text-xs font-bold transition-all ${
+              title={`Post a resting Limit ${manualSide} order of ${manualSize} shares @ ₹${manualPrice.toFixed(2)} into the book (Maker)`}
+              className={`py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
                 manualSide === "BUY"
                   ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40"
                   : "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40"
@@ -496,7 +511,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             </button>
             <button
               onClick={() => handleManualSubmit("MARKET")}
-              className={`py-1.5 rounded text-xs font-bold text-white shadow-md transition-all ${
+              title={`Execute an aggressive Market ${manualSide} order of ${manualSize} shares immediately against resting quotes (Taker)`}
+              className={`py-1.5 rounded text-xs font-bold text-white shadow-md transition-all cursor-pointer ${
                 manualSide === "BUY"
                   ? "bg-emerald-600 hover:bg-emerald-500"
                   : "bg-rose-600 hover:bg-rose-500"

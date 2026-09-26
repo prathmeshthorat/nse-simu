@@ -35,8 +35,8 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* Whale Buy Sweep */}
         <button
           onClick={() => onTriggerWhale("BUY")}
-          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all flex items-center gap-1.5"
-          title="Inject massive institutional market BUY sweep"
+          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Inject massive institutional market BUY sweep across multiple Ask levels (test short inventory skew)"
         >
           <span>🐋</span> Whale Buy Sweep
         </button>
@@ -44,8 +44,8 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* Whale Sell Dump */}
         <button
           onClick={() => onTriggerWhale("SELL")}
-          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all flex items-center gap-1.5"
-          title="Inject massive institutional market SELL dump"
+          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Inject massive institutional market SELL dump across multiple Bid levels (test long inventory skew)"
         >
           <span>🐋</span> Whale Sell Dump
         </button>
@@ -53,12 +53,12 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* Flash Crash */}
         <button
           onClick={() => onSetRegime("FLASH_CRASH")}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
             currentRegime === "FLASH_CRASH"
               ? "bg-rose-600 text-white font-bold shadow-lg shadow-rose-600/30 animate-pulse"
               : "bg-slate-800 text-rose-300 hover:bg-slate-700 border border-rose-900/60"
           }`}
-          title="Sudden cascade of toxic sell orders"
+          title="Trigger sudden cascade of toxic sell orders, collapsing price and testing auto-hedge stop loss"
         >
           <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Flash Crash
         </button>
@@ -66,12 +66,12 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* Bull Rally */}
         <button
           onClick={() => onSetRegime("BULL_RALLY")}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
             currentRegime === "BULL_RALLY"
               ? "bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-600/30 animate-pulse"
               : "bg-slate-800 text-emerald-300 hover:bg-slate-700 border border-emerald-900/60"
           }`}
-          title="Aggressive upward momentum"
+          title="Trigger continuous upward buying pressure and positive drift"
         >
           <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Bull Rally
         </button>
@@ -79,12 +79,12 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* High Volatility */}
         <button
           onClick={() => onSetRegime("HIGH_VOLATILITY")}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
             currentRegime === "HIGH_VOLATILITY"
               ? "bg-amber-600 text-white font-bold shadow-lg shadow-amber-600/30 animate-pulse"
               : "bg-slate-800 text-amber-300 hover:bg-slate-700 border border-amber-900/60"
           }`}
-          title="Wide spreads and violent whipsaws"
+          title="Trigger extreme volatility with wide bid-ask spreads and rapid price whipsaws"
         >
           <Waves className="w-3.5 h-3.5 text-amber-400" /> Vol Spike
         </button>
@@ -92,12 +92,12 @@ export const ScenarioBar: React.FC<ScenarioBarProps> = ({
         {/* Normal Calm */}
         <button
           onClick={() => onSetRegime("NORMAL")}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
             currentRegime === "NORMAL"
               ? "bg-indigo-600 text-white font-bold"
               : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700/60"
           }`}
-          title="Calm two-way market flow"
+          title="Return to balanced, low-volatility two-way flow optimal for harvesting bid-ask spread"
         >
           <Wind className="w-3.5 h-3.5 text-indigo-400" /> Calm Two-Way
         </button>

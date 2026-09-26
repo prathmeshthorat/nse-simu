@@ -89,6 +89,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({
                 <div
                   key={`bid-${b.price}`}
                   onClick={() => onSelectPrice(b.price, "BUY")}
+                  title={`Click to populate order ticket: BUY ${ticker.lotSize} @ ${ticker.currency}${b.price.toFixed(2)}${b.hasUserOrder ? ' (Your MM quote is resting here)' : ''}`}
                   className={`relative grid grid-cols-3 items-center px-2 py-1 cursor-pointer transition-colors hover:bg-emerald-950/40 ${
                     b.hasUserOrder ? "bg-emerald-950/30" : ""
                   }`}
@@ -135,6 +136,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({
                 <div
                   key={`ask-${a.price}`}
                   onClick={() => onSelectPrice(a.price, "SELL")}
+                  title={`Click to populate order ticket: SELL ${ticker.lotSize} @ ${ticker.currency}${a.price.toFixed(2)}${a.hasUserOrder ? ' (Your MM quote is resting here)' : ''}`}
                   className={`relative grid grid-cols-3 items-center px-2 py-1 cursor-pointer transition-colors hover:bg-rose-950/40 ${
                     a.hasUserOrder ? "bg-rose-950/30" : ""
                   }`}
