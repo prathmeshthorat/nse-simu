@@ -12,6 +12,16 @@ An institutional-grade, real-time stock market and algorithmic market making sim
 
 ## 🌟 Key Highlights
 
+- **Interactive Scroll & Zoom Canvas**: Click-and-drag horizontal panning through historical candles, mouse wheel scrolling, and Ctrl+Wheel zooming, with floating `⏩ Jump to Live Edge` button.
+- **Full Indicator Suite with Toggles**:
+  - **EMA 9** (Cyan fast trend) & **EMA 21** (Purple slow trend)
+  - **Bollinger Bands** (20-period, 2 std dev with shaded volatility channel)
+  - **VWAP** (Volume-Weighted Average Price)
+  - **RSI (14)** (Relative Strength Index oscillator with 70/30 overbought/oversold bands)
+  - **Fair Value** (Latent theoretical price line)
+  - **Market Maker Quotes** (Real-time active Bid/Ask levels)
+  - **Execution Fills** (Interactive ▲ Buy / ▼ Sell execution pins on candles)
+  - **Volume Histogram** (Color-coded buyer/seller volume bars)
 - **5 Quantitative Market Making Strategies**:
   1. **Avellaneda-Stoikov**: Inventory-risk reservation price skewing.
   2. **Imbalance Alpha**: Level-2 queue imbalance predictive flow leaning.

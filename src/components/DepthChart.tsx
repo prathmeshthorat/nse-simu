@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import type { OrderBook, TickerInfo } from '../types/market';
+import React, { useRef, useEffect } from "react";
+import type { OrderBook, TickerInfo } from "../types/market";
 
 interface DepthChartProps {
   book: OrderBook;
@@ -12,7 +12,7 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
@@ -25,7 +25,7 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
     const height = rect.height;
 
     // Clear background
-    ctx.fillStyle = '#090d16';
+    ctx.fillStyle = "#090d16";
     ctx.fillRect(0, 0, width, height);
 
     const margin = { top: 20, right: 20, bottom: 30, left: 55 };
@@ -47,19 +47,22 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
     }));
 
     const minPrice = bidPoints[0]?.price || book.midPrice - 1;
-    const maxPrice = askPoints[askPoints.length - 1]?.price || book.midPrice + 1;
+    const maxPrice =
+      askPoints[askPoints.length - 1]?.price || book.midPrice + 1;
     const maxCumSize = Math.max(
       bidPoints[0]?.cumSize || 1,
       askPoints[askPoints.length - 1]?.cumSize || 1,
-      10
+      10,
     );
 
     const priceRange = maxPrice - minPrice || 1;
-    const getX = (price: number) => margin.left + ((price - minPrice) / priceRange) * chartW;
-    const getY = (size: number) => margin.top + chartH - (size / maxCumSize) * chartH;
+    const getX = (price: number) =>
+      margin.left + ((price - minPrice) / priceRange) * chartW;
+    const getY = (size: number) =>
+      margin.top + chartH - (size / maxCumSize) * chartH;
 
     // Grid lines
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+    ctx.strokeStyle = "rgba(30, 41, 59, 0.6)";
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 4]);
 
@@ -71,9 +74,9 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
       ctx.lineTo(margin.left + chartW, y);
       ctx.stroke();
 
-      ctx.fillStyle = '#64748b';
-      ctx.font = '9px monospace';
-      ctx.textAlign = 'right';
+      ctx.fillStyle = "#64748b";
+      ctx.font = "9px monospace";
+      ctx.textAlign = "right";
       ctx.fillText(Math.round(sizeVal).toString(), margin.left - 6, y + 3);
     }
     ctx.setLineDash([]);
@@ -93,12 +96,12 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
     ctx.closePath();
 
     const bidGrad = ctx.createLinearGradient(0, margin.top, 0, bottomY);
-    bidGrad.addColorStop(0, 'rgba(34, 197, 94, 0.45)');
-    bidGrad.addColorStop(1, 'rgba(34, 197, 94, 0.05)');
+    bidGrad.addColorStop(0, "rgba(34, 197, 94, 0.45)");
+    bidGrad.addColorStop(1, "rgba(34, 197, 94, 0.05)");
     ctx.fillStyle = bidGrad;
     ctx.fill();
 
-    ctx.strokeStyle = '#22c55e';
+    ctx.strokeStyle = "#22c55e";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -116,18 +119,18 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
     ctx.closePath();
 
     const askGrad = ctx.createLinearGradient(0, margin.top, 0, bottomY);
-    askGrad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
-    askGrad.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+    askGrad.addColorStop(0, "rgba(239, 68, 68, 0.45)");
+    askGrad.addColorStop(1, "rgba(239, 68, 68, 0.05)");
     ctx.fillStyle = askGrad;
     ctx.fill();
 
-    ctx.strokeStyle = '#ef4444';
+    ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Mid Price Marker
     const midX = getX(book.midPrice);
-    ctx.strokeStyle = '#eab308';
+    ctx.strokeStyle = "#eab308";
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -137,9 +140,9 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
     ctx.setLineDash([]);
 
     // Price Labels on Bottom Axis
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "10px monospace";
+    ctx.textAlign = "center";
 
     const numLabels = 5;
     for (let i = 0; i <= numLabels; i++) {
@@ -158,7 +161,10 @@ export const DepthChart: React.FC<DepthChartProps> = ({ book, ticker }) => {
         <span className="flex items-center gap-1 text-rose-400 font-bold">
           <span className="w-2 h-2 rounded-full bg-rose-400" /> Asks Wall
         </span>
-        <span className="text-amber-400">Mid: {ticker.currency}{book.midPrice.toFixed(2)}</span>
+        <span className="text-amber-400">
+          Mid: {ticker.currency}
+          {book.midPrice.toFixed(2)}
+        </span>
       </div>
       <canvas ref={canvasRef} className="w-full h-full block" />
     </div>

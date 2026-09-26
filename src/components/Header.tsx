@@ -229,14 +229,22 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Sound FX Toggle */}
         <button
           onClick={onToggleMute}
-          title={isMuted ? "Unmute trading audio chimes and execution sound FX" : "Mute trading audio chimes and sound FX"}
+          title={
+            isMuted
+              ? "Unmute trading audio chimes and execution sound FX"
+              : "Mute trading audio chimes and sound FX"
+          }
           className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
             isMuted
               ? "bg-slate-800 text-slate-500 border-slate-700/60 hover:text-slate-300"
               : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
           }`}
         >
-          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          {isMuted ? (
+            <VolumeX className="w-3.5 h-3.5" />
+          ) : (
+            <Volume2 className="w-3.5 h-3.5" />
+          )}
         </button>
 
         {/* Analytics Scorecard & CSV Exporter */}

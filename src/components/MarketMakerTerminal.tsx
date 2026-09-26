@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import type {
   MarketMakerConfig,
   MarketMakerStats,
   TickerInfo,
   OrderSide,
   StrategyType,
-} from '../types/market';
+} from "../types/market";
 import {
   Cpu,
   Sliders,
@@ -21,7 +21,7 @@ import {
   Waves,
   RefreshCw,
   GitBranch,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface MarketMakerTerminalProps {
   config: MarketMakerConfig;
@@ -29,41 +29,51 @@ interface MarketMakerTerminalProps {
   ticker: TickerInfo;
   midPrice: number;
   onUpdateConfig: (newConfig: Partial<MarketMakerConfig>) => void;
-  onPlaceManualOrder: (side: OrderSide, type: 'LIMIT' | 'MARKET', price: number, size: number) => void;
+  onPlaceManualOrder: (
+    side: OrderSide,
+    type: "LIMIT" | "MARKET",
+    price: number,
+    size: number,
+  ) => void;
   onFlattenPosition: () => void;
   selectedPrice?: { price: number; side: OrderSide } | null;
 }
 
-const STRATEGIES: { id: StrategyType; name: string; icon: React.ReactNode; desc: string }[] = [
+const STRATEGIES: {
+  id: StrategyType;
+  name: string;
+  icon: React.ReactNode;
+  desc: string;
+}[] = [
   {
-    id: 'AVELLANEDA_STOIKOV',
-    name: 'Avellaneda-Stoikov',
+    id: "AVELLANEDA_STOIKOV",
+    name: "Avellaneda-Stoikov",
     icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" />,
-    desc: 'Classic quantitative inventory risk model: skews reservation price inversely with inventory.',
+    desc: "Classic quantitative inventory risk model: skews reservation price inversely with inventory.",
   },
   {
-    id: 'IMBALANCE_ALPHA',
-    name: 'Imbalance Alpha',
+    id: "IMBALANCE_ALPHA",
+    name: "Imbalance Alpha",
     icon: <BarChart className="w-3.5 h-3.5 text-indigo-400" />,
-    desc: 'Uses Level-2 volume imbalance to anticipate toxic market orders and lean quotes.',
+    desc: "Uses Level-2 volume imbalance to anticipate toxic market orders and lean quotes.",
   },
   {
-    id: 'ADAPTIVE_VOL',
-    name: 'Adaptive Volatility',
+    id: "ADAPTIVE_VOL",
+    name: "Adaptive Volatility",
     icon: <Waves className="w-3.5 h-3.5 text-emerald-400" />,
-    desc: 'Dynamically widens bid-ask spread during high realized volatility spikes to avoid adverse fills.',
+    desc: "Dynamically widens bid-ask spread during high realized volatility spikes to avoid adverse fills.",
   },
   {
-    id: 'MULTI_LEVEL_GRID',
-    name: 'Multi-Level Grid',
+    id: "MULTI_LEVEL_GRID",
+    name: "Multi-Level Grid",
     icon: <GitBranch className="w-3.5 h-3.5 text-cyan-400" />,
-    desc: 'Quotes tiered liquidity across multiple price levels with increasing order sizes.',
+    desc: "Quotes tiered liquidity across multiple price levels with increasing order sizes.",
   },
   {
-    id: 'VWAP_MEAN_REVERSION',
-    name: 'VWAP Mean Reversion',
+    id: "VWAP_MEAN_REVERSION",
+    name: "VWAP Mean Reversion",
     icon: <RefreshCw className="w-3.5 h-3.5 text-purple-400" />,
-    desc: 'Fades price deviations from intraday volume-weighted average price (VWAP).',
+    desc: "Fades price deviations from intraday volume-weighted average price (VWAP).",
   },
 ];
 
@@ -80,7 +90,7 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
   // Manual order inputs
   const [manualPrice, setManualPrice] = useState<number>(ticker.initialPrice);
   const [manualSize, setManualSize] = useState<number>(ticker.lotSize);
-  const [manualSide, setManualSide] = useState<OrderSide>('BUY');
+  const [manualSide, setManualSide] = useState<OrderSide>("BUY");
 
   // React to selected price from OrderBook click
   React.useEffect(() => {
@@ -95,7 +105,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
   const isPnlPositive = stats.totalPnL >= 0;
 
   // Reservation price calculation for display
-  const skewTicks = Math.round((stats.inventory * config.inventorySkewFactor) / ticker.lotSize);
+  const skewTicks = Math.round(
+    (stats.inventory * config.inventorySkewFactor) / ticker.lotSize,
+  );
   const reservationPrice = midPrice - skewTicks * ticker.tickSize;
 
   // Mini equity curve SVG path
@@ -110,15 +122,16 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
     .map((pt, idx) => {
       const x = (idx / (pnlPoints.length - 1 || 1)) * svgWidth;
       const y = svgHeight - ((pt.pnl - minPnl) / pnlRange) * svgHeight;
-      return `${idx === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      return `${idx === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
-    .join(' ');
+    .join(" ");
 
-  const handleManualSubmit = (type: 'LIMIT' | 'MARKET') => {
+  const handleManualSubmit = (type: "LIMIT" | "MARKET") => {
     onPlaceManualOrder(manualSide, type, manualPrice, manualSize);
   };
 
-  const activeStrategy = STRATEGIES.find((s) => s.id === config.strategyType) || STRATEGIES[0];
+  const activeStrategy =
+    STRATEGIES.find((s) => s.id === config.strategyType) || STRATEGIES[0];
 
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-md">
@@ -138,11 +151,19 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             <input
               type="checkbox"
               checked={config.autoQuoting}
-              onChange={(e) => onUpdateConfig({ autoQuoting: e.target.checked })}
+              onChange={(e) =>
+                onUpdateConfig({ autoQuoting: e.target.checked })
+              }
               className="w-3.5 h-3.5 text-amber-500 rounded bg-slate-800 border-slate-700 focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <span className={config.autoQuoting ? 'text-amber-400 font-bold' : 'text-slate-400'}>
-              {config.autoQuoting ? 'AUTO QUOTING ACTIVE' : 'AUTO QUOTING OFF'}
+            <span
+              className={
+                config.autoQuoting
+                  ? "text-amber-400 font-bold"
+                  : "text-slate-400"
+              }
+            >
+              {config.autoQuoting ? "AUTO QUOTING ACTIVE" : "AUTO QUOTING OFF"}
             </span>
           </label>
         </div>
@@ -158,8 +179,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
               title={st.desc}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
                 config.strategyType === st.id
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? "bg-amber-500 text-slate-950 shadow-md font-bold"
+                  : "bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
               {st.icon}
@@ -167,7 +188,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-1 italic">{activeStrategy.desc}</p>
+        <p className="text-[11px] text-slate-400 mt-1 italic">
+          {activeStrategy.desc}
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
@@ -175,19 +198,27 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {/* Total PnL Card */}
           <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80 flex flex-col justify-between">
-            <span className="text-[10px] uppercase text-slate-400 font-medium">Total PnL</span>
+            <span className="text-[10px] uppercase text-slate-400 font-medium">
+              Total PnL
+            </span>
             <div className="flex items-baseline gap-1 mt-1">
               <span
                 className={`text-lg font-mono font-black tabular-nums ${
-                  isPnlPositive ? 'text-emerald-400' : 'text-rose-400'
+                  isPnlPositive ? "text-emerald-400" : "text-rose-400"
                 }`}
               >
-                {isPnlPositive ? '+' : ''}₹{stats.totalPnL.toFixed(2)}
+                {isPnlPositive ? "+" : ""}₹{stats.totalPnL.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-              <span>Realized: {stats.realizedPnL >= 0 ? '+' : ''}₹{stats.realizedPnL.toFixed(0)}</span>
-              <span>Unreal: {stats.unrealizedPnL >= 0 ? '+' : ''}₹{stats.unrealizedPnL.toFixed(0)}</span>
+              <span>
+                Realized: {stats.realizedPnL >= 0 ? "+" : ""}₹
+                {stats.realizedPnL.toFixed(0)}
+              </span>
+              <span>
+                Unreal: {stats.unrealizedPnL >= 0 ? "+" : ""}₹
+                {stats.unrealizedPnL.toFixed(0)}
+              </span>
             </div>
           </div>
 
@@ -217,17 +248,22 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             <div className="flex items-baseline gap-1.5 mt-1">
               <span
                 className={`text-lg font-mono font-black tabular-nums ${
-                  isLong ? 'text-emerald-400' : isShort ? 'text-rose-400' : 'text-slate-300'
+                  isLong
+                    ? "text-emerald-400"
+                    : isShort
+                      ? "text-rose-400"
+                      : "text-slate-300"
                 }`}
               >
                 {stats.inventory > 0 ? `+${stats.inventory}` : stats.inventory}
               </span>
               <span className="text-[11px] font-bold text-slate-400">
-                {isLong ? 'LONG' : isShort ? 'SHORT' : 'FLAT'}
+                {isLong ? "LONG" : isShort ? "SHORT" : "FLAT"}
               </span>
             </div>
             <span className="text-[10px] text-slate-400 font-mono mt-1">
-              Avg Cost: {stats.avgCost > 0 ? `₹${stats.avgCost.toFixed(2)}` : 'N/A'}
+              Avg Cost:{" "}
+              {stats.avgCost > 0 ? `₹${stats.avgCost.toFixed(2)}` : "N/A"}
             </span>
           </div>
 
@@ -245,7 +281,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
               </span>
             </div>
             <span className="text-[10px] text-slate-400 font-mono mt-1">
-              Fills: {stats.userFillsCount} | MaxDD: -₹{stats.maxDrawdown.toFixed(0)}
+              Fills: {stats.userFillsCount} | MaxDD: -₹
+              {stats.maxDrawdown.toFixed(0)}
             </span>
           </div>
         </div>
@@ -258,7 +295,8 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
               Inventory Risk &amp; Reservation Price Tilt
             </span>
             <div className="font-mono text-[11px] text-slate-400">
-              Limit: ±{config.maxInventory} shares | Hedge at: ±{config.hedgeThreshold}
+              Limit: ±{config.maxInventory} shares | Hedge at: ±
+              {config.hedgeThreshold}
             </div>
           </div>
 
@@ -268,7 +306,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             {stats.inventory > 0 ? (
               <div
                 className="absolute top-0 bottom-0 left-1/2 bg-emerald-500 transition-all duration-200"
-                style={{ width: `${Math.min(50, (stats.inventory / config.maxInventory) * 50)}%` }}
+                style={{
+                  width: `${Math.min(50, (stats.inventory / config.maxInventory) * 50)}%`,
+                }}
               />
             ) : stats.inventory < 0 ? (
               <div
@@ -284,10 +324,14 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
           <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
             <span className="text-rose-400 font-semibold">-Max Short</span>
             <span className="text-slate-300">
-              Reservation Price: <strong className="text-amber-400">₹{reservationPrice.toFixed(2)}</strong> (
+              Reservation Price:{" "}
+              <strong className="text-amber-400">
+                ₹{reservationPrice.toFixed(2)}
+              </strong>{" "}
+              (
               {skewTicks !== 0
-                ? `${skewTicks > 0 ? '-' : '+'}${Math.abs(skewTicks)} ticks skew`
-                : 'Unskewed'}
+                ? `${skewTicks > 0 ? "-" : "+"}${Math.abs(skewTicks)} ticks skew`
+                : "Unskewed"}
               )
             </span>
             <span className="text-emerald-400 font-semibold">+Max Long</span>
@@ -301,21 +345,28 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
               <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
               Cumulative PnL Equity Curve
             </span>
-            <span className="text-[10px] font-mono text-slate-400">Last 40s</span>
+            <span className="text-[10px] font-mono text-slate-400">
+              Last 40s
+            </span>
           </div>
           <div className="w-full h-12 flex items-center justify-center">
             {pnlPoints.length > 1 ? (
-              <svg className="w-full h-full" viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+              <svg
+                className="w-full h-full"
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              >
                 <path
                   d={svgPath}
                   fill="none"
-                  stroke={isPnlPositive ? '#10b981' : '#f43f5e'}
+                  stroke={isPnlPositive ? "#10b981" : "#f43f5e"}
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
               </svg>
             ) : (
-              <span className="text-[10px] text-slate-500">Accumulating trading data...</span>
+              <span className="text-[10px] text-slate-500">
+                Accumulating trading data...
+              </span>
             )}
           </div>
         </div>
@@ -352,7 +403,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 max="8"
                 step="1"
                 value={config.halfSpreadTicks}
-                onChange={(e) => onUpdateConfig({ halfSpreadTicks: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  onUpdateConfig({ halfSpreadTicks: parseInt(e.target.value) })
+                }
                 title={`Half-spread distance: ${config.halfSpreadTicks} ticks from reservation price`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
@@ -372,18 +425,24 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 max="1.0"
                 step="0.05"
                 value={config.inventorySkewFactor}
-                onChange={(e) => onUpdateConfig({ inventorySkewFactor: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  onUpdateConfig({
+                    inventorySkewFactor: parseFloat(e.target.value),
+                  })
+                }
                 title={`Inventory Skew Gamma (γ): ${config.inventorySkewFactor.toFixed(2)}`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
             </div>
 
             {/* Strategy Specific Slider */}
-            {config.strategyType === 'MULTI_LEVEL_GRID' && (
+            {config.strategyType === "MULTI_LEVEL_GRID" && (
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-cyan-400">Grid Depth Levels:</span>
-                  <span className="font-mono text-cyan-300 font-bold">{config.gridLevels} levels</span>
+                  <span className="font-mono text-cyan-300 font-bold">
+                    {config.gridLevels} levels
+                  </span>
                 </div>
                 <input
                   type="range"
@@ -391,14 +450,16 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                   max="4"
                   step="1"
                   value={config.gridLevels}
-                  onChange={(e) => onUpdateConfig({ gridLevels: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    onUpdateConfig({ gridLevels: parseInt(e.target.value) })
+                  }
                   title={`Quote across ${config.gridLevels} tiered price levels on each side`}
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                 />
               </div>
             )}
 
-            {config.strategyType === 'ADAPTIVE_VOL' && (
+            {config.strategyType === "ADAPTIVE_VOL" && (
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-emerald-400">Vol Multiplier:</span>
@@ -412,17 +473,23 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                   max="3.0"
                   step="0.1"
                   value={config.volMultiplier}
-                  onChange={(e) => onUpdateConfig({ volMultiplier: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    onUpdateConfig({
+                      volMultiplier: parseFloat(e.target.value),
+                    })
+                  }
                   title="Spread expansion multiplier during volatility spikes"
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                 />
               </div>
             )}
 
-            {config.strategyType === 'IMBALANCE_ALPHA' && (
+            {config.strategyType === "IMBALANCE_ALPHA" && (
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-indigo-400">Imbalance Alpha Weight:</span>
+                  <span className="text-indigo-400">
+                    Imbalance Alpha Weight:
+                  </span>
                   <span className="font-mono text-indigo-300 font-bold">
                     {config.imbalanceSensitivity.toFixed(2)}
                   </span>
@@ -434,7 +501,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                   step="0.05"
                   value={config.imbalanceSensitivity}
                   onChange={(e) =>
-                    onUpdateConfig({ imbalanceSensitivity: parseFloat(e.target.value) })
+                    onUpdateConfig({
+                      imbalanceSensitivity: parseFloat(e.target.value),
+                    })
                   }
                   title="Sensitivity to order book queue imbalance"
                   className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
@@ -446,7 +515,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-400">Base Quote Size:</span>
-                <span className="font-mono text-slate-200 font-bold">{config.quoteSize} shares</span>
+                <span className="font-mono text-slate-200 font-bold">
+                  {config.quoteSize} shares
+                </span>
               </div>
               <input
                 type="range"
@@ -454,7 +525,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 max={ticker.lotSize * 6}
                 step={ticker.lotSize}
                 value={config.quoteSize}
-                onChange={(e) => onUpdateConfig({ quoteSize: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  onUpdateConfig({ quoteSize: parseInt(e.target.value) })
+                }
                 title={`Base quote size: ${config.quoteSize} shares per side`}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
@@ -463,9 +536,12 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             {/* Auto Hedge Toggle */}
             <div className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800 col-span-1 sm:col-span-2">
               <div className="flex flex-col">
-                <span className="text-[11px] font-semibold text-slate-300">Auto-Hedge Risk Guard</span>
+                <span className="text-[11px] font-semibold text-slate-300">
+                  Auto-Hedge Risk Guard
+                </span>
                 <span className="text-[9px] text-slate-500">
-                  Market sweep if inventory exceeds ±{config.hedgeThreshold} shares
+                  Market sweep if inventory exceeds ±{config.hedgeThreshold}{" "}
+                  shares
                 </span>
               </div>
               <label
@@ -475,7 +551,9 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
                 <input
                   type="checkbox"
                   checked={config.autoHedge}
-                  onChange={(e) => onUpdateConfig({ autoHedge: e.target.checked })}
+                  onChange={(e) =>
+                    onUpdateConfig({ autoHedge: e.target.checked })
+                  }
                   className="sr-only peer"
                 />
                 <div className="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3.5 after:transition-all peer-checked:bg-emerald-500"></div>
@@ -498,26 +576,28 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <span className="text-[10px] text-slate-400 block mb-1">Side</span>
+              <span className="text-[10px] text-slate-400 block mb-1">
+                Side
+              </span>
               <div className="grid grid-cols-2 gap-1">
                 <button
-                  onClick={() => setManualSide('BUY')}
+                  onClick={() => setManualSide("BUY")}
                   title="Select BUY side for manual order ticket"
                   className={`py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
-                    manualSide === 'BUY'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                    manualSide === "BUY"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "bg-slate-800 text-slate-400 hover:text-white"
                   }`}
                 >
                   BUY
                 </button>
                 <button
-                  onClick={() => setManualSide('SELL')}
+                  onClick={() => setManualSide("SELL")}
                   title="Select SELL side for manual order ticket"
                   className={`py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
-                    manualSide === 'SELL'
-                      ? 'bg-rose-600 text-white shadow-sm'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                    manualSide === "SELL"
+                      ? "bg-rose-600 text-white shadow-sm"
+                      : "bg-slate-800 text-slate-400 hover:text-white"
                   }`}
                 >
                   SELL
@@ -526,25 +606,33 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
             </div>
 
             <div>
-              <span className="text-[10px] text-slate-400 block mb-1">Price (₹)</span>
+              <span className="text-[10px] text-slate-400 block mb-1">
+                Price (₹)
+              </span>
               <input
                 type="number"
                 step={ticker.tickSize}
                 value={manualPrice}
-                onChange={(e) => setManualPrice(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setManualPrice(parseFloat(e.target.value) || 0)
+                }
                 title={`Target price in ₹ (tick size: ${ticker.tickSize})`}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <span className="text-[10px] text-slate-400 block mb-1">Qty (Shares)</span>
+              <span className="text-[10px] text-slate-400 block mb-1">
+                Qty (Shares)
+              </span>
               <input
                 type="number"
                 step={ticker.lotSize}
                 min={ticker.lotSize}
                 value={manualSize}
-                onChange={(e) => setManualSize(parseInt(e.target.value) || ticker.lotSize)}
+                onChange={(e) =>
+                  setManualSize(parseInt(e.target.value) || ticker.lotSize)
+                }
                 title={`Order quantity in shares (lot size: ${ticker.lotSize})`}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
               />
@@ -553,23 +641,23 @@ export const MarketMakerTerminal: React.FC<MarketMakerTerminalProps> = ({
 
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
-              onClick={() => handleManualSubmit('LIMIT')}
+              onClick={() => handleManualSubmit("LIMIT")}
               title={`Post a resting Limit ${manualSide} order of ${manualSize} shares @ ₹${manualPrice.toFixed(2)} into the book (Maker)`}
               className={`py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                manualSide === 'BUY'
-                  ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                  : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40'
+                manualSide === "BUY"
+                  ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40"
+                  : "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40"
               }`}
             >
               Post Limit {manualSide}
             </button>
             <button
-              onClick={() => handleManualSubmit('MARKET')}
+              onClick={() => handleManualSubmit("MARKET")}
               title={`Execute an aggressive Market ${manualSide} order of ${manualSize} shares immediately against resting quotes (Taker)`}
               className={`py-1.5 rounded text-xs font-bold text-white shadow-md transition-all cursor-pointer ${
-                manualSide === 'BUY'
-                  ? 'bg-emerald-600 hover:bg-emerald-500'
-                  : 'bg-rose-600 hover:bg-rose-500'
+                manualSide === "BUY"
+                  ? "bg-emerald-600 hover:bg-emerald-500"
+                  : "bg-rose-600 hover:bg-rose-500"
               }`}
             >
               Instant Market {manualSide}

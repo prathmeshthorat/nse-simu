@@ -140,6 +140,7 @@ export class MarketEngine {
       pnlHistory: [{ time: Date.now(), pnl: 0 }],
     };
 
+    this.seedHistoricalCandles();
     this.initializeOrderBook();
     this.initCandle(this.fairValue);
   }
@@ -185,6 +186,7 @@ export class MarketEngine {
     this.mmConfig.maxInventory = ticker.lotSize * 10;
     this.mmConfig.hedgeThreshold = ticker.lotSize * 6;
 
+    this.seedHistoricalCandles();
     this.initializeOrderBook();
     this.initCandle(this.fairValue);
   }
@@ -260,6 +262,40 @@ export class MarketEngine {
     if (this.mmConfig.autoQuoting) {
       this.updateMarketMakerQuotes();
     }
+  }
+
+  private seedHistoricalCandles() {
+    this.candles = [];
+    const now = Math.floor(Date.now() / 1000) * 1000;
+    const count = 60;
+    const candleDuration = 3000;
+    let p = this.ticker.initialPrice - (Math.random() - 0.5) * 4 * this.ticker.tickSize * 20;
+
+    for (let i = count; i >= 1; i--) {
+      const time = now - i * candleDuration;
+      const walk = (Math.random() - 0.49) * this.ticker.initialPrice * 0.001;
+      const open = this.roundTick(p);
+      const close = this.roundTick(p + walk);
+      const high = this.roundTick(Math.max(open, close) + Math.random() * this.ticker.tickSize * 4);
+      const low = this.roundTick(Math.min(open, close) - Math.random() * this.ticker.tickSize * 4);
+      const volume = this.ticker.lotSize * (Math.floor(Math.random() * 8) + 2);
+
+      this.candles.push({
+        time,
+        open,
+        high,
+        low,
+        close,
+        volume,
+        userBuyVol: 0,
+        userSellVol: 0,
+      });
+
+      p = close;
+    }
+
+    this.fairValue = p;
+    this.lastTradePrice = p;
   }
 
   private initCandle(price: number) {
@@ -836,7 +872,7 @@ export class MarketEngine {
 
     if (now - this.currentCandle.time >= 3000) {
       this.candles.push({ ...this.currentCandle });
-      if (this.candles.length > 80) {
+      if (this.candles.length > 600) {
         this.candles.shift();
       }
       this.currentCandle = {

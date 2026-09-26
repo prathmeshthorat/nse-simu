@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MarketEngine, NSE_TICKERS } from './simulation/marketEngine';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { MarketEngine, NSE_TICKERS } from "./simulation/marketEngine";
 import type {
   TickerInfo,
   OrderBook as OrderBookType,
@@ -9,20 +9,29 @@ import type {
   MarketMakerStats,
   MarketRegime,
   OrderSide,
-} from './types/market';
-import { Header } from './components/Header';
-import { Chart } from './components/Chart';
-import { OrderBook } from './components/OrderBook';
-import { MarketMakerTerminal } from './components/MarketMakerTerminal';
-import { TimeAndSales } from './components/TimeAndSales';
-import { ScenarioBar } from './components/ScenarioBar';
-import { EducationalModal } from './components/EducationalModal';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { playFillSound, playShockSound, setSoundMuted, getSoundMuted } from './utils/audio';
+} from "./types/market";
+import { Header } from "./components/Header";
+import { Chart } from "./components/Chart";
+import { OrderBook } from "./components/OrderBook";
+import { MarketMakerTerminal } from "./components/MarketMakerTerminal";
+import { TimeAndSales } from "./components/TimeAndSales";
+import { ScenarioBar } from "./components/ScenarioBar";
+import { EducationalModal } from "./components/EducationalModal";
+import { AnalyticsModal } from "./components/AnalyticsModal";
+import {
+  playFillSound,
+  playShockSound,
+  setSoundMuted,
+  getSoundMuted,
+} from "./utils/audio";
 
 export const App: React.FC = () => {
-  const [currentTicker, setCurrentTicker] = useState<TickerInfo>(NSE_TICKERS.RELIANCE);
-  const engineRef = useRef<MarketEngine>(new MarketEngine(NSE_TICKERS.RELIANCE));
+  const [currentTicker, setCurrentTicker] = useState<TickerInfo>(
+    NSE_TICKERS.RELIANCE,
+  );
+  const engineRef = useRef<MarketEngine>(
+    new MarketEngine(NSE_TICKERS.RELIANCE),
+  );
 
   // Simulation controls
   const [isRunning, setIsRunning] = useState<boolean>(true);
@@ -32,19 +41,31 @@ export const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState<boolean>(() => getSoundMuted());
 
   // Live state snapshots
-  const [lastPrice, setLastPrice] = useState<number>(NSE_TICKERS.RELIANCE.initialPrice);
-  const [dayHigh, setDayHigh] = useState<number>(NSE_TICKERS.RELIANCE.dailyHigh);
+  const [lastPrice, setLastPrice] = useState<number>(
+    NSE_TICKERS.RELIANCE.initialPrice,
+  );
+  const [dayHigh, setDayHigh] = useState<number>(
+    NSE_TICKERS.RELIANCE.dailyHigh,
+  );
   const [dayLow, setDayLow] = useState<number>(NSE_TICKERS.RELIANCE.dailyLow);
   const [totalVol, setTotalVol] = useState<number>(124500);
 
-  const [orderBook, setOrderBook] = useState<OrderBookType>(() => engineRef.current.getOrderBook());
+  const [orderBook, setOrderBook] = useState<OrderBookType>(() =>
+    engineRef.current.getOrderBook(),
+  );
   const [candles, setCandles] = useState<Candle[]>([]);
   const [currentCandle, setCurrentCandle] = useState<Candle | null>(null);
-  const [fairValue, setFairValue] = useState<number>(NSE_TICKERS.RELIANCE.initialPrice);
+  const [fairValue, setFairValue] = useState<number>(
+    NSE_TICKERS.RELIANCE.initialPrice,
+  );
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [mmConfig, setMmConfig] = useState<MarketMakerConfig>(engineRef.current.mmConfig);
-  const [mmStats, setMmStats] = useState<MarketMakerStats>(engineRef.current.mmStats);
-  const [currentRegime, setCurrentRegime] = useState<MarketRegime>('NORMAL');
+  const [mmConfig, setMmConfig] = useState<MarketMakerConfig>(
+    engineRef.current.mmConfig,
+  );
+  const [mmStats, setMmStats] = useState<MarketMakerStats>(
+    engineRef.current.mmStats,
+  );
+  const [currentRegime, setCurrentRegime] = useState<MarketRegime>("NORMAL");
 
   // Track user fill count to trigger audio sound effects
   const prevFillCountRef = useRef<number>(0);
@@ -67,7 +88,10 @@ export const App: React.FC = () => {
     setCandles([...engine.candles]);
     setCurrentCandle(engine.currentCandle ? { ...engine.currentCandle } : null);
     setTrades([...engine.trades]);
-    setMmStats({ ...engine.mmStats, pnlHistory: [...engine.mmStats.pnlHistory] });
+    setMmStats({
+      ...engine.mmStats,
+      pnlHistory: [...engine.mmStats.pnlHistory],
+    });
     setMmConfig({ ...engine.mmConfig });
     setCurrentRegime(engine.regime);
 
@@ -139,15 +163,15 @@ export const App: React.FC = () => {
   // Place manual order from ticket
   const handlePlaceManualOrder = (
     side: OrderSide,
-    type: 'LIMIT' | 'MARKET',
+    type: "LIMIT" | "MARKET",
     price: number,
-    size: number
+    size: number,
   ) => {
-    if (type === 'MARKET') {
+    if (type === "MARKET") {
       engineRef.current.executeMarketOrder({
         side,
         size,
-        participantType: 'USER_MM',
+        participantType: "USER_MM",
         isUser: true,
       });
       playFillSound(side);
@@ -157,7 +181,7 @@ export const App: React.FC = () => {
         price,
         size,
         isUser: true,
-        participantType: 'USER_MM',
+        participantType: "USER_MM",
       });
     }
     syncFromEngine();
@@ -167,11 +191,11 @@ export const App: React.FC = () => {
   const handleFlattenPosition = () => {
     const inv = engineRef.current.mmStats.inventory;
     if (inv === 0) return;
-    const hedgeSide: OrderSide = inv > 0 ? 'SELL' : 'BUY';
+    const hedgeSide: OrderSide = inv > 0 ? "SELL" : "BUY";
     engineRef.current.executeMarketOrder({
       side: hedgeSide,
       size: Math.abs(inv),
-      participantType: 'USER_MM',
+      participantType: "USER_MM",
       isUser: true,
     });
     playFillSound(hedgeSide);
@@ -182,7 +206,7 @@ export const App: React.FC = () => {
   const handleSetRegime = (regime: MarketRegime) => {
     engineRef.current.setRegime(regime);
     setCurrentRegime(regime);
-    if (regime === 'FLASH_CRASH' || regime === 'HIGH_VOLATILITY') {
+    if (regime === "FLASH_CRASH" || regime === "HIGH_VOLATILITY") {
       playShockSound();
     }
   };
@@ -264,7 +288,9 @@ export const App: React.FC = () => {
             <OrderBook
               book={orderBook}
               ticker={currentTicker}
-              onSelectPrice={(price, side) => setSelectedBookPrice({ price, side })}
+              onSelectPrice={(price, side) =>
+                setSelectedBookPrice({ price, side })
+              }
             />
           </div>
 
@@ -285,7 +311,10 @@ export const App: React.FC = () => {
       </footer>
 
       {/* Educational Guide Modal */}
-      <EducationalModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <EducationalModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
 
       {/* Quantitative Analytics & Scorecard Modal */}
       <AnalyticsModal

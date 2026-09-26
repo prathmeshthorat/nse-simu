@@ -1,6 +1,16 @@
-import React from 'react';
-import type { MarketMakerStats, TickerInfo, Trade } from '../types/market';
-import { X, Award, Shield, DollarSign, Download, Percent, BarChart3, TrendingDown, Scale } from 'lucide-react';
+import React from "react";
+import type { MarketMakerStats, TickerInfo, Trade } from "../types/market";
+import {
+  X,
+  Award,
+  Shield,
+  DollarSign,
+  Download,
+  Percent,
+  BarChart3,
+  TrendingDown,
+  Scale,
+} from "lucide-react";
 
 interface AnalyticsModalProps {
   isOpen: boolean;
@@ -20,31 +30,45 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
   if (!isOpen) return null;
 
   const userTrades = trades.filter((t) => t.isUserTrade);
-  const makerCount = userTrades.filter((t) => t.userRole === 'MAKER').length;
-  const takerCount = userTrades.filter((t) => t.userRole === 'TAKER').length;
-  const makerRatio = userTrades.length > 0 ? Math.round((makerCount / userTrades.length) * 100) : 0;
+  const makerCount = userTrades.filter((t) => t.userRole === "MAKER").length;
+  const takerCount = userTrades.filter((t) => t.userRole === "TAKER").length;
+  const makerRatio =
+    userTrades.length > 0
+      ? Math.round((makerCount / userTrades.length) * 100)
+      : 0;
 
   // Export to CSV function
   const handleExportCSV = () => {
-    const headers = ['TradeID', 'Timestamp', 'Price', 'Size', 'UserSide', 'Role', 'FeeOrRebate'];
+    const headers = [
+      "TradeID",
+      "Timestamp",
+      "Price",
+      "Size",
+      "UserSide",
+      "Role",
+      "FeeOrRebate",
+    ];
     const rows = userTrades.map((t) => [
       t.id,
       new Date(t.timestamp).toISOString(),
       t.price.toFixed(2),
       t.size,
-      t.userSide || '',
-      t.userRole || '',
-      t.feeOrRebate ? t.feeOrRebate.toFixed(2) : '0.00',
+      t.userSide || "",
+      t.userRole || "",
+      t.feeOrRebate ? t.feeOrRebate.toFixed(2) : "0.00",
     ]);
 
     const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
 
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `nse_mm_analytics_${ticker.symbol}_${Date.now()}.csv`);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `nse_mm_analytics_${ticker.symbol}_${Date.now()}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -64,7 +88,8 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                 Quantitative Analytics & Strategy Scorecard
               </h3>
               <p className="text-xs text-slate-400">
-                Performance Metrics, Risk Drawdowns & Exchange Rebates ({ticker.symbol})
+                Performance Metrics, Risk Drawdowns & Exchange Rebates (
+                {ticker.symbol})
               </p>
             </div>
           </div>
@@ -89,7 +114,9 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               <div className="text-xl font-mono font-black text-indigo-400 mt-1">
                 {stats.sharpeRatio.toFixed(2)}
               </div>
-              <span className="text-[10px] text-slate-500">Annualized return / risk</span>
+              <span className="text-[10px] text-slate-500">
+                Annualized return / risk
+              </span>
             </div>
 
             {/* Win Rate */}
@@ -108,12 +135,15 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
             {/* Max Drawdown */}
             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
               <span className="text-[10px] text-slate-400 uppercase font-semibold flex items-center gap-1">
-                <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Max Drawdown
+                <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Max
+                Drawdown
               </span>
               <div className="text-xl font-mono font-black text-rose-400 mt-1">
                 -₹{stats.maxDrawdown.toFixed(2)}
               </div>
-              <span className="text-[10px] text-slate-500">Peak PnL: ₹{stats.peakPnL.toFixed(0)}</span>
+              <span className="text-[10px] text-slate-500">
+                Peak PnL: ₹{stats.peakPnL.toFixed(0)}
+              </span>
             </div>
 
             {/* Maker Fill Ratio */}
@@ -159,16 +189,18 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                 </span>
                 <span
                   className={`text-base font-bold ${
-                    stats.netRebates >= 0 ? 'text-indigo-300' : 'text-rose-300'
+                    stats.netRebates >= 0 ? "text-indigo-300" : "text-rose-300"
                   }`}
                 >
-                  {stats.netRebates >= 0 ? '+' : ''}₹{stats.netRebates.toFixed(2)}
+                  {stats.netRebates >= 0 ? "+" : ""}₹
+                  {stats.netRebates.toFixed(2)}
                 </span>
               </div>
             </div>
             <p className="text-[11px] text-slate-400">
-              Professional high-frequency market makers often operate with razor-thin spread margins because
-              exchange liquidity rebates provide a substantial structural revenue cushion.
+              Professional high-frequency market makers often operate with
+              razor-thin spread margins because exchange liquidity rebates
+              provide a substantial structural revenue cushion.
             </p>
           </div>
 
@@ -180,33 +212,48 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="font-bold text-amber-400 block">1. Avellaneda-Stoikov</span>
+                <span className="font-bold text-amber-400 block">
+                  1. Avellaneda-Stoikov
+                </span>
                 <p className="text-slate-400 text-[11px] mt-0.5">
-                  Classic quantitative inventory risk model. Skews reservation price away from accumulated stock.
+                  Classic quantitative inventory risk model. Skews reservation
+                  price away from accumulated stock.
                 </p>
               </div>
               <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="font-bold text-indigo-400 block">2. Imbalance Alpha</span>
+                <span className="font-bold text-indigo-400 block">
+                  2. Imbalance Alpha
+                </span>
                 <p className="text-slate-400 text-[11px] mt-0.5">
-                  Uses top-of-book and level-2 volume imbalance to anticipate toxic flow and tilt quotes.
+                  Uses top-of-book and level-2 volume imbalance to anticipate
+                  toxic flow and tilt quotes.
                 </p>
               </div>
               <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="font-bold text-emerald-400 block">3. Adaptive Volatility</span>
+                <span className="font-bold text-emerald-400 block">
+                  3. Adaptive Volatility
+                </span>
                 <p className="text-slate-400 text-[11px] mt-0.5">
-                  Dynamically widens bid-ask spread during high realized volatility spikes to avoid adverse fills.
+                  Dynamically widens bid-ask spread during high realized
+                  volatility spikes to avoid adverse fills.
                 </p>
               </div>
               <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="font-bold text-cyan-400 block">4. Multi-Level Grid</span>
+                <span className="font-bold text-cyan-400 block">
+                  4. Multi-Level Grid
+                </span>
                 <p className="text-slate-400 text-[11px] mt-0.5">
-                  Deploys tiered liquidity across 3-4 price levels with increasing order sizes for maximum depth.
+                  Deploys tiered liquidity across 3-4 price levels with
+                  increasing order sizes for maximum depth.
                 </p>
               </div>
               <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800 col-span-1 sm:col-span-2">
-                <span className="font-bold text-purple-400 block">5. VWAP Mean Reversion</span>
+                <span className="font-bold text-purple-400 block">
+                  5. VWAP Mean Reversion
+                </span>
                 <p className="text-slate-400 text-[11px] mt-0.5">
-                  Fades price deviations from intraday volume-weighted average price (VWAP) to capture pullbacks.
+                  Fades price deviations from intraday volume-weighted average
+                  price (VWAP) to capture pullbacks.
                 </p>
               </div>
             </div>
