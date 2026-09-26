@@ -59,6 +59,7 @@ export const App: React.FC = () => {
     NSE_TICKERS.RELIANCE.initialPrice,
   );
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [mmConfig, setMmConfig] = useState<MarketMakerConfig>(
     engineRef.current.mmConfig,
   );
@@ -88,6 +89,7 @@ export const App: React.FC = () => {
     setCandles([...engine.candles]);
     setCurrentCandle(engine.currentCandle ? { ...engine.currentCandle } : null);
     setTrades([...engine.trades]);
+    setUserTrades([...engine.userTrades]);
     setMmStats({
       ...engine.mmStats,
       pnlHistory: [...engine.mmStats.pnlHistory],
@@ -132,6 +134,7 @@ export const App: React.FC = () => {
     setDayHigh(ticker.dailyHigh);
     setDayLow(ticker.dailyLow);
     setTotalVol(Math.floor(Math.random() * 50000) + 50000);
+    setUserTrades([]);
     syncFromEngine();
   };
 
@@ -141,7 +144,14 @@ export const App: React.FC = () => {
     prevFillCountRef.current = 0;
     setDayHigh(currentTicker.dailyHigh);
     setDayLow(currentTicker.dailyLow);
+    setUserTrades([]);
     syncFromEngine();
+  };
+
+  // Clear user execution audit history
+  const handleClearUserTrades = () => {
+    engineRef.current.userTrades = [];
+    setUserTrades([]);
   };
 
   // Update MM Config
@@ -294,9 +304,14 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* Time & Sales (Live Tape) */}
+          {/* Time & Sales (Live Tape & My Trades History) */}
           <div className="flex-1 min-h-[390px]">
-            <TimeAndSales trades={trades} ticker={currentTicker} />
+            <TimeAndSales
+              trades={trades}
+              userTrades={userTrades}
+              ticker={currentTicker}
+              onClearUserTrades={handleClearUserTrades}
+            />
           </div>
         </div>
       </main>
@@ -323,6 +338,7 @@ export const App: React.FC = () => {
         stats={mmStats}
         ticker={currentTicker}
         trades={trades}
+        userTrades={userTrades}
       />
     </div>
   );

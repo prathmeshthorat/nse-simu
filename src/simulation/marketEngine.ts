@@ -67,6 +67,7 @@ export class MarketEngine {
   fairValue: number;
   orders: Order[] = [];
   trades: Trade[] = [];
+  userTrades: Trade[] = [];
   candles: Candle[] = [];
   currentCandle: Candle | null = null;
   lastTradePrice: number;
@@ -155,6 +156,7 @@ export class MarketEngine {
     this.recentPriceHistory = [ticker.initialPrice];
     this.orders = [];
     this.trades = [];
+    this.userTrades = [];
     this.candles = [];
     this.currentCandle = null;
     this.userQuoteIds = [];
@@ -699,7 +701,7 @@ export class MarketEngine {
   private processTrade(trade: Trade) {
     this.lastTradePrice = trade.price;
     this.trades.unshift(trade);
-    if (this.trades.length > 120) {
+    if (this.trades.length > 150) {
       this.trades.pop();
     }
 
@@ -718,6 +720,13 @@ export class MarketEngine {
     // Process user inventory, PnL, fees & rebates
     if (trade.isUserTrade && trade.userSide) {
       this.handleUserFill(trade);
+    }
+
+    if (trade.isUserTrade) {
+      this.userTrades.unshift(trade);
+      if (this.userTrades.length > 500) {
+        this.userTrades.pop();
+      }
     }
   }
 

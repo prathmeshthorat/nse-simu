@@ -50,7 +50,9 @@ export const Chart: React.FC<ChartProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // View mode
-  const [chartType, setChartType] = useState<"candles" | "line" | "depth">("candles");
+  const [chartType, setChartType] = useState<"candles" | "line" | "depth">(
+    "candles",
+  );
 
   // Indicators toggle state
   const [indicators, setIndicators] = useState<IndicatorSettings>({
@@ -99,7 +101,8 @@ export const Chart: React.FC<ChartProps> = ({
     const vwapArr: (number | null)[] = new Array(n).fill(null);
     const rsiArr: (number | null)[] = new Array(n).fill(null);
 
-    if (n === 0) return { ema9Arr, ema21Arr, bbUpper, bbLower, bbMiddle, vwapArr, rsiArr };
+    if (n === 0)
+      return { ema9Arr, ema21Arr, bbUpper, bbLower, bbMiddle, vwapArr, rsiArr };
 
     // 1. EMA 9
     const k9 = 2 / (9 + 1);
@@ -189,7 +192,7 @@ export const Chart: React.FC<ChartProps> = ({
 
   const visibleCandles = useMemo(
     () => allCandles.slice(startIndex, endIndex),
-    [allCandles, startIndex, endIndex]
+    [allCandles, startIndex, endIndex],
   );
 
   // Canvas render loop
@@ -216,9 +219,16 @@ export const Chart: React.FC<ChartProps> = ({
 
     // Panel heights allocation
     const rsiHeight = indicators.rsi ? Math.max(55, totalAvailH * 0.22) : 0;
-    const volumeHeight = indicators.volume ? Math.max(40, totalAvailH * 0.18) : 0;
+    const volumeHeight = indicators.volume
+      ? Math.max(40, totalAvailH * 0.18)
+      : 0;
     const gap = 12;
-    const priceHeight = totalAvailH - rsiHeight - volumeHeight - (rsiHeight > 0 ? gap : 0) - (volumeHeight > 0 ? gap : 0);
+    const priceHeight =
+      totalAvailH -
+      rsiHeight -
+      volumeHeight -
+      (rsiHeight > 0 ? gap : 0) -
+      (volumeHeight > 0 ? gap : 0);
 
     // Clear background
     ctx.fillStyle = "#090d16";
@@ -241,8 +251,10 @@ export const Chart: React.FC<ChartProps> = ({
       minPrice = Math.min(minPrice, fairValue);
       maxPrice = Math.max(maxPrice, fairValue);
     }
-    if (indicators.mmQuotes && userBidPrice) minPrice = Math.min(minPrice, userBidPrice);
-    if (indicators.mmQuotes && userAskPrice) maxPrice = Math.max(maxPrice, userAskPrice);
+    if (indicators.mmQuotes && userBidPrice)
+      minPrice = Math.min(minPrice, userBidPrice);
+    if (indicators.mmQuotes && userAskPrice)
+      maxPrice = Math.max(maxPrice, userAskPrice);
 
     // Add 8% vertical padding
     const pricePadding = (maxPrice - minPrice) * 0.08 || 1;
@@ -251,7 +263,9 @@ export const Chart: React.FC<ChartProps> = ({
     const priceRange = maxPrice - minPrice;
 
     const getY = (p: number) => {
-      return margin.top + priceHeight - ((p - minPrice) / priceRange) * priceHeight;
+      return (
+        margin.top + priceHeight - ((p - minPrice) / priceRange) * priceHeight
+      );
     };
 
     const n = visibleCandles.length;
@@ -276,7 +290,11 @@ export const Chart: React.FC<ChartProps> = ({
       ctx.lineTo(margin.left + chartWidth, y);
       ctx.stroke();
 
-      ctx.fillText(`${ticker.currency}${p.toFixed(2)}`, margin.left + chartWidth + 6, y + 3);
+      ctx.fillText(
+        `${ticker.currency}${p.toFixed(2)}`,
+        margin.left + chartWidth + 6,
+        y + 3,
+      );
     }
 
     // 2. Bollinger Bands (if enabled)
@@ -378,12 +396,18 @@ export const Chart: React.FC<ChartProps> = ({
       ctx.stroke();
 
       // Gradient area fill
-      const lastX = margin.left + (visibleCandles.length - 1) * stepX + stepX / 2;
+      const lastX =
+        margin.left + (visibleCandles.length - 1) * stepX + stepX / 2;
       const firstX = margin.left + stepX / 2;
       ctx.lineTo(lastX, margin.top + priceHeight);
       ctx.lineTo(firstX, margin.top + priceHeight);
       ctx.closePath();
-      const grad = ctx.createLinearGradient(0, margin.top, 0, margin.top + priceHeight);
+      const grad = ctx.createLinearGradient(
+        0,
+        margin.top,
+        0,
+        margin.top + priceHeight,
+      );
       grad.addColorStop(0, "rgba(56, 189, 248, 0.22)");
       grad.addColorStop(1, "rgba(56, 189, 248, 0.0)");
       ctx.fillStyle = grad;
@@ -391,7 +415,12 @@ export const Chart: React.FC<ChartProps> = ({
     }
 
     // 4. Indicator Line Helper
-    const drawIndicatorLine = (arr: (number | null)[], color: string, width = 1.5, dashed = false) => {
+    const drawIndicatorLine = (
+      arr: (number | null)[],
+      color: string,
+      width = 1.5,
+      dashed = false,
+    ) => {
       ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.lineWidth = width;
@@ -447,12 +476,20 @@ export const Chart: React.FC<ChartProps> = ({
       ctx.fillRect(margin.left + chartWidth + 2, fvY - 9, 62, 18);
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 9px monospace";
-      ctx.fillText(`FV ${fairValue.toFixed(2)}`, margin.left + chartWidth + 4, fvY + 4);
+      ctx.fillText(
+        `FV ${fairValue.toFixed(2)}`,
+        margin.left + chartWidth + 4,
+        fvY + 4,
+      );
     }
 
     // 6. Market Maker Quotes (Green Bid, Red Ask)
     if (indicators.mmQuotes) {
-      if (userBidPrice && userBidPrice >= minPrice && userBidPrice <= maxPrice) {
+      if (
+        userBidPrice &&
+        userBidPrice >= minPrice &&
+        userBidPrice <= maxPrice
+      ) {
         const bidY = getY(userBidPrice);
         ctx.beginPath();
         ctx.strokeStyle = "#10b981";
@@ -470,7 +507,11 @@ export const Chart: React.FC<ChartProps> = ({
         ctx.fillText(`MY BID`, margin.left + chartWidth + 4, bidY + 4);
       }
 
-      if (userAskPrice && userAskPrice >= minPrice && userAskPrice <= maxPrice) {
+      if (
+        userAskPrice &&
+        userAskPrice >= minPrice &&
+        userAskPrice <= maxPrice
+      ) {
         const askY = getY(userAskPrice);
         ctx.beginPath();
         ctx.strokeStyle = "#f43f5e";
@@ -492,7 +533,8 @@ export const Chart: React.FC<ChartProps> = ({
     // 7. Recent User Trade Execution Markers (▲ Buy / ▼ Sell)
     if (indicators.userFills) {
       const recentUserTrades = trades.filter((t) => t.isUserTrade).slice(0, 15);
-      const rightEdgeX = margin.left + (visibleCandles.length - 1) * stepX + stepX / 2;
+      const rightEdgeX =
+        margin.left + (visibleCandles.length - 1) * stepX + stepX / 2;
 
       recentUserTrades.forEach((t, idx) => {
         const y = getY(t.price);
@@ -519,7 +561,8 @@ export const Chart: React.FC<ChartProps> = ({
     }
 
     // 8. Volume Sub-chart
-    let currentYOffset = margin.top + priceHeight + (volumeHeight > 0 ? gap : 0);
+    let currentYOffset =
+      margin.top + priceHeight + (volumeHeight > 0 ? gap : 0);
     if (indicators.volume && volumeHeight > 0) {
       const volBaseY = currentYOffset + volumeHeight;
 
@@ -535,7 +578,9 @@ export const Chart: React.FC<ChartProps> = ({
         const vH = (c.volume / maxVolume) * (volumeHeight - 5);
         const isUp = c.close >= c.open;
 
-        ctx.fillStyle = isUp ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.35)";
+        ctx.fillStyle = isUp
+          ? "rgba(34, 197, 94, 0.35)"
+          : "rgba(239, 68, 68, 0.35)";
         ctx.fillRect(x - barWidth / 2, volBaseY - vH, barWidth, vH);
       });
 
@@ -556,7 +601,8 @@ export const Chart: React.FC<ChartProps> = ({
       ctx.strokeStyle = "rgba(30, 41, 59, 0.8)";
       ctx.strokeRect(margin.left, currentYOffset, chartWidth, rsiHeight);
 
-      const getRsiY = (val: number) => currentYOffset + rsiHeight - (val / 100) * rsiHeight;
+      const getRsiY = (val: number) =>
+        currentYOffset + rsiHeight - (val / 100) * rsiHeight;
 
       // 70 Overbought & 30 Oversold lines
       const y70 = getRsiY(70);
@@ -677,7 +723,10 @@ export const Chart: React.FC<ChartProps> = ({
       const deltaX = e.clientX - dragStartXRef.current;
       const stepX = (rect.width - 85) / visibleCount;
       const candleDelta = Math.round(deltaX / stepX);
-      const newOffset = Math.max(0, Math.min(maxScrollOffset, dragStartOffsetRef.current + candleDelta));
+      const newOffset = Math.max(
+        0,
+        Math.min(maxScrollOffset, dragStartOffsetRef.current + candleDelta),
+      );
       setScrollOffset(newOffset);
     } else {
       setHoverData({ x, y });
@@ -698,12 +747,15 @@ export const Chart: React.FC<ChartProps> = ({
     } else {
       // Scroll horizontally
       const delta = Math.sign(e.deltaY) * 3;
-      setScrollOffset((prev) => Math.max(0, Math.min(maxScrollOffset, prev + delta)));
+      setScrollOffset((prev) =>
+        Math.max(0, Math.min(maxScrollOffset, prev + delta)),
+      );
     }
   };
 
   const handleZoomIn = () => setVisibleCount((prev) => Math.max(15, prev - 8));
-  const handleZoomOut = () => setVisibleCount((prev) => Math.min(120, prev + 8));
+  const handleZoomOut = () =>
+    setVisibleCount((prev) => Math.min(120, prev + 8));
   const handleResetView = () => {
     setScrollOffset(0);
     setVisibleCount(45);
@@ -789,103 +841,161 @@ export const Chart: React.FC<ChartProps> = ({
 
                   {/* EMA 9 */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, ema9: !prev.ema9 }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({ ...prev, ema9: !prev.ema9 }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-cyan-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400" /> EMA 9 (Fast)
+                      <span className="w-2 h-2 rounded-full bg-cyan-400" /> EMA
+                      9 (Fast)
                     </span>
-                    {indicators.ema9 && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                    {indicators.ema9 && (
+                      <Check className="w-3.5 h-3.5 text-cyan-400" />
+                    )}
                   </button>
 
                   {/* EMA 21 */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, ema21: !prev.ema21 }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({ ...prev, ema21: !prev.ema21 }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-purple-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-purple-400" /> EMA 21 (Slow)
+                      <span className="w-2 h-2 rounded-full bg-purple-400" />{" "}
+                      EMA 21 (Slow)
                     </span>
-                    {indicators.ema21 && <Check className="w-3.5 h-3.5 text-purple-400" />}
+                    {indicators.ema21 && (
+                      <Check className="w-3.5 h-3.5 text-purple-400" />
+                    )}
                   </button>
 
                   {/* Bollinger Bands */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, bollinger: !prev.bollinger }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({
+                        ...prev,
+                        bollinger: !prev.bollinger,
+                      }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-blue-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-blue-400" /> Bollinger Bands (20,2)
+                      <span className="w-2 h-2 rounded-full bg-blue-400" />{" "}
+                      Bollinger Bands (20,2)
                     </span>
-                    {indicators.bollinger && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                    {indicators.bollinger && (
+                      <Check className="w-3.5 h-3.5 text-blue-400" />
+                    )}
                   </button>
 
                   {/* VWAP */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, vwap: !prev.vwap }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({ ...prev, vwap: !prev.vwap }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-indigo-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-indigo-400" /> VWAP
+                      <span className="w-2 h-2 rounded-full bg-indigo-400" />{" "}
+                      VWAP
                     </span>
-                    {indicators.vwap && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                    {indicators.vwap && (
+                      <Check className="w-3.5 h-3.5 text-indigo-400" />
+                    )}
                   </button>
 
                   {/* RSI */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, rsi: !prev.rsi }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({ ...prev, rsi: !prev.rsi }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-violet-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-violet-400" /> RSI (14) Oscillator
+                      <span className="w-2 h-2 rounded-full bg-violet-400" />{" "}
+                      RSI (14) Oscillator
                     </span>
-                    {indicators.rsi && <Check className="w-3.5 h-3.5 text-violet-400" />}
+                    {indicators.rsi && (
+                      <Check className="w-3.5 h-3.5 text-violet-400" />
+                    )}
                   </button>
 
                   <div className="border-t border-slate-800 my-1" />
 
                   {/* Fair Value */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, fairValue: !prev.fairValue }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({
+                        ...prev,
+                        fairValue: !prev.fairValue,
+                      }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-amber-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-amber-400" /> Fair Value Line
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />{" "}
+                      Fair Value Line
                     </span>
-                    {indicators.fairValue && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                    {indicators.fairValue && (
+                      <Check className="w-3.5 h-3.5 text-amber-400" />
+                    )}
                   </button>
 
                   {/* MM Quotes */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, mmQuotes: !prev.mmQuotes }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({
+                        ...prev,
+                        mmQuotes: !prev.mmQuotes,
+                      }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-emerald-400 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" /> MM Quotes
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />{" "}
+                      MM Quotes
                     </span>
-                    {indicators.mmQuotes && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                    {indicators.mmQuotes && (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    )}
                   </button>
 
                   {/* User Fills */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, userFills: !prev.userFills }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({
+                        ...prev,
+                        userFills: !prev.userFills,
+                      }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-slate-300 font-semibold">
                       <span>▲▼</span> User Fills Markers
                     </span>
-                    {indicators.userFills && <Check className="w-3.5 h-3.5 text-slate-200" />}
+                    {indicators.userFills && (
+                      <Check className="w-3.5 h-3.5 text-slate-200" />
+                    )}
                   </button>
 
                   {/* Volume */}
                   <button
-                    onClick={() => setIndicators((prev) => ({ ...prev, volume: !prev.volume }))}
+                    onClick={() =>
+                      setIndicators((prev) => ({
+                        ...prev,
+                        volume: !prev.volume,
+                      }))
+                    }
                     className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800 transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2 text-slate-400 font-semibold">
                       <span>📊</span> Volume Histogram
                     </span>
-                    {indicators.volume && <Check className="w-3.5 h-3.5 text-slate-200" />}
+                    {indicators.volume && (
+                      <Check className="w-3.5 h-3.5 text-slate-200" />
+                    )}
                   </button>
                 </div>
               )}
@@ -944,7 +1054,10 @@ export const Chart: React.FC<ChartProps> = ({
               </span>
             )}
             <span className="text-slate-400 border-l border-slate-800 pl-2">
-              C: <strong className="text-white">{latestCandle.close.toFixed(2)}</strong>
+              C:{" "}
+              <strong className="text-white">
+                {latestCandle.close.toFixed(2)}
+              </strong>
             </span>
           </div>
         )}

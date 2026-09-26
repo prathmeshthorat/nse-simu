@@ -29,6 +29,7 @@ An institutional-grade, real-time stock market and algorithmic market making sim
   4. **Multi-Level Grid**: Tiered liquidity quoting across multiple price depths with escalating quote sizes.
   5. **VWAP Mean Reversion**: Intraday volume-weighted average price fading.
 - **Dual Visual Modes**: Seamlessly toggle between **60 FPS Candlestick/Line Canvas** and **Cumulative Market Depth Mountain**.
+- **Dedicated Trade History & Execution Audit Log**: Tabbed right inside Time & Sales with real-time fill tracking, filterable by Side (Buys/Sells) and Role (Makers/Takers), execution metrics (Total Fills, Volume, Net Rebates, Maker %), and one-click CSV export.
 - **Exchange Fee & Maker Rebate Economics**: Models maker rebates (+0.005%) vs taker fees (-0.015%) mirroring real-world HFT margins.
 - **Quantitative Scorecard & CSV Exporter**: Live tracking of Sharpe Ratio, Maximum Drawdown, Win Rate %, Maker/Taker Ratio, and one-click execution log CSV export.
 - **Zero-Latency Web Audio API Synthesizer**: Subtle harmonic audio chimes for Buy/Sell fills and low-frequency resonance alerts on market shocks.

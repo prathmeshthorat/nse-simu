@@ -17,7 +17,8 @@ interface AnalyticsModalProps {
   onClose: () => void;
   stats: MarketMakerStats;
   ticker: TickerInfo;
-  trades: Trade[];
+  trades?: Trade[];
+  userTrades?: Trade[];
 }
 
 export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
@@ -25,11 +26,12 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
   onClose,
   stats,
   ticker,
-  trades,
+  trades = [],
+  userTrades: propUserTrades,
 }) => {
   if (!isOpen) return null;
 
-  const userTrades = trades.filter((t) => t.isUserTrade);
+  const userTrades = propUserTrades || trades.filter((t) => t.isUserTrade);
   const makerCount = userTrades.filter((t) => t.userRole === "MAKER").length;
   const takerCount = userTrades.filter((t) => t.userRole === "TAKER").length;
   const makerRatio =
