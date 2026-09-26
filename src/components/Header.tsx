@@ -7,6 +7,9 @@ import {
   TrendingUp,
   TrendingDown,
   Gauge,
+  Volume2,
+  VolumeX,
+  BarChart3,
 } from "lucide-react";
 import type { TickerInfo } from "../types/market";
 import { NSE_TICKERS } from "../simulation/marketEngine";
@@ -26,6 +29,9 @@ interface HeaderProps {
   onChangeSpeed: (speed: number) => void;
   onReset: () => void;
   onOpenGuide: () => void;
+  isMuted: boolean;
+  onToggleMute: () => void;
+  onOpenAnalytics: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,6 +49,9 @@ export const Header: React.FC<HeaderProps> = ({
   onChangeSpeed,
   onReset,
   onOpenGuide,
+  isMuted,
+  onToggleMute,
+  onOpenAnalytics,
 }) => {
   const isPositive = change >= 0;
 
@@ -186,7 +195,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Play/Pause */}
         <button
           onClick={onTogglePlay}
-          title={isRunning ? "Pause the real-time simulation" : "Resume the real-time simulation"}
+          title={
+            isRunning
+              ? "Pause the real-time simulation"
+              : "Resume the real-time simulation"
+          }
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md ${
             isRunning
               ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
@@ -213,11 +226,34 @@ export const Header: React.FC<HeaderProps> = ({
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
 
+        {/* Sound FX Toggle */}
+        <button
+          onClick={onToggleMute}
+          title={isMuted ? "Unmute trading audio chimes and execution sound FX" : "Mute trading audio chimes and sound FX"}
+          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            isMuted
+              ? "bg-slate-800 text-slate-500 border-slate-700/60 hover:text-slate-300"
+              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+          }`}
+        >
+          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Analytics Scorecard & CSV Exporter */}
+        <button
+          onClick={onOpenAnalytics}
+          title="Open Quantitative Scorecard, Sharpe ratio, and export CSV execution logs"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition-colors cursor-pointer"
+        >
+          <BarChart3 className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="hidden lg:inline">Scorecard</span>
+        </button>
+
         {/* Guide / Tutorial button */}
         <button
           onClick={onOpenGuide}
           title="Open educational guide explaining Market Making, the spread, and Avellaneda-Stoikov skew"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-xs text-amber-400 font-medium transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-xs text-amber-400 font-medium transition-colors cursor-pointer"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span className="hidden md:inline">How MM Works</span>

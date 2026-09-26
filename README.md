@@ -12,12 +12,18 @@ An institutional-grade, real-time stock market and algorithmic market making sim
 
 ## 🌟 Key Highlights
 
-- **Live 60 FPS HTML5 Canvas Chart**: Candlesticks (3s intervals), dynamic VWAP, latent fair value line, and execution pin markers when your quotes are filled.
+- **5 Quantitative Market Making Strategies**:
+  1. **Avellaneda-Stoikov**: Inventory-risk reservation price skewing.
+  2. **Imbalance Alpha**: Level-2 queue imbalance predictive flow leaning.
+  3. **Adaptive Volatility**: Realized volatility-scaled dynamic spread expansion.
+  4. **Multi-Level Grid**: Tiered liquidity quoting across multiple price depths with escalating quote sizes.
+  5. **VWAP Mean Reversion**: Intraday volume-weighted average price fading.
+- **Dual Visual Modes**: Seamlessly toggle between **60 FPS Candlestick/Line Canvas** and **Cumulative Market Depth Mountain**.
+- **Exchange Fee & Maker Rebate Economics**: Models maker rebates (+0.005%) vs taker fees (-0.015%) mirroring real-world HFT margins.
+- **Quantitative Scorecard & CSV Exporter**: Live tracking of Sharpe Ratio, Maximum Drawdown, Win Rate %, Maker/Taker Ratio, and one-click execution log CSV export.
+- **Zero-Latency Web Audio API Synthesizer**: Subtle harmonic audio chimes for Buy/Sell fills and low-frequency resonance alerts on market shocks.
 - **Level-2 Limit Order Book (LOB)**: 10-level side-by-side bids and asks with dynamic depth percentage bars, micro-price, and visual Order Book Imbalance gauge.
-- **Avellaneda-Stoikov Market Maker**: Algorithmic two-sided quoting engine featuring inventory risk management, reservation price skewing, and automatic delta hedging.
-- **Real-Time Time & Sales (Trade Tape)**: Streaming feed of executed trades with taker side detection and instant highlighting when your quotes are hit.
-- **Market Shock & Stress Testing**: One-click scenario injectors to simulate Whale block sweeps, Flash Crashes, Bull Rallies, and Volatility Spikes.
-- **Interactive Educational Guide**: Built-in visual tutorial breaking down the math of the spread, adverse selection, and inventory skew.
+- **Interactive Tooltips**: Comprehensive explanations and quantitative guidance on every button, slider, and control.
 
 ---
 

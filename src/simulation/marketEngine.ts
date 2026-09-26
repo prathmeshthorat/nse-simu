@@ -79,10 +79,17 @@ export class MarketEngine {
   
   volatility: number = 0.8;
   drift: number = 0;
+
+  // Running market microstructure trackers
+  private recentPriceHistory: number[] = [];
+  cumVolume: number = 0;
+  cumPriceVolume: number = 0;
+  vwap: number;
+  realizedVol: number = 0.8;
   
   private nextOrderId = 1;
   private nextTradeId = 1;
-  private userQuoteIds: { buyId?: string; sellId?: string } = {};
+  private userQuoteIds: string[] = [];
 
   constructor(
     ticker: TickerInfo = NSE_TICKERS.RELIANCE,
@@ -91,8 +98,11 @@ export class MarketEngine {
     this.ticker = ticker;
     this.fairValue = ticker.initialPrice;
     this.lastTradePrice = ticker.initialPrice;
+    this.vwap = ticker.initialPrice;
+    this.recentPriceHistory = [ticker.initialPrice];
 
     this.mmConfig = {
+      strategyType: 'AVELLANEDA_STOIKOV',
       autoQuoting: true,
       halfSpreadTicks: 2,
       quoteSize: ticker.lotSize,
@@ -101,6 +111,9 @@ export class MarketEngine {
       autoHedge: true,
       hedgeThreshold: ticker.lotSize * 6,
       cancelReplaceFreqMs: 500,
+      gridLevels: 3,
+      volMultiplier: 1.5,
+      imbalanceSensitivity: 0.5,
       ...initialConfig,
     };
 
@@ -115,6 +128,15 @@ export class MarketEngine {
       userFillsCount: 0,
       volumeTraded: 0,
       spreadCaptured: 0,
+      makerRebates: 0,
+      takerFees: 0,
+      netRebates: 0,
+      maxDrawdown: 0,
+      peakPnL: 0,
+      winRate: 0,
+      profitableTrades: 0,
+      losingTrades: 0,
+      sharpeRatio: 0,
       pnlHistory: [{ time: Date.now(), pnl: 0 }],
     };
 
@@ -126,11 +148,15 @@ export class MarketEngine {
     this.ticker = ticker;
     this.fairValue = ticker.initialPrice;
     this.lastTradePrice = ticker.initialPrice;
+    this.vwap = ticker.initialPrice;
+    this.cumVolume = 0;
+    this.cumPriceVolume = 0;
+    this.recentPriceHistory = [ticker.initialPrice];
     this.orders = [];
     this.trades = [];
     this.candles = [];
     this.currentCandle = null;
-    this.userQuoteIds = {};
+    this.userQuoteIds = [];
     
     this.mmStats = {
       cash: 1000000,
@@ -143,6 +169,15 @@ export class MarketEngine {
       userFillsCount: 0,
       volumeTraded: 0,
       spreadCaptured: 0,
+      makerRebates: 0,
+      takerFees: 0,
+      netRebates: 0,
+      maxDrawdown: 0,
+      peakPnL: 0,
+      winRate: 0,
+      profitableTrades: 0,
+      losingTrades: 0,
+      sharpeRatio: 0,
       pnlHistory: [{ time: Date.now(), pnl: 0 }],
     };
     
@@ -156,17 +191,17 @@ export class MarketEngine {
 
   setRegime(regime: MarketRegime) {
     this.regime = regime;
-    this.regimeTimer = 30; // 30 ticks of regime effect
+    this.regimeTimer = 35; // 35 ticks of regime effect
     
     if (regime === 'HIGH_VOLATILITY') {
-      this.volatility = 2.5;
+      this.volatility = 2.6;
       this.drift = 0;
     } else if (regime === 'BULL_RALLY') {
       this.volatility = 1.2;
-      this.drift = 0.8;
+      this.drift = 0.85;
     } else if (regime === 'FLASH_CRASH') {
-      this.volatility = 3.0;
-      this.drift = -2.2;
+      this.volatility = 3.2;
+      this.drift = -2.4;
     } else if (regime === 'WHALE_ACCUMULATION') {
       this.volatility = 0.9;
       this.drift = 0.4;
@@ -261,10 +296,24 @@ export class MarketEngine {
       this.fairValue + priceChange
     );
 
+    // Track realized volatility over last 25 steps
+    this.recentPriceHistory.push(this.fairValue);
+    if (this.recentPriceHistory.length > 25) {
+      this.recentPriceHistory.shift();
+    }
+    if (this.recentPriceHistory.length >= 5) {
+      let sumSqDiff = 0;
+      for (let i = 1; i < this.recentPriceHistory.length; i++) {
+        const diff = this.recentPriceHistory[i] - this.recentPriceHistory[i - 1];
+        sumSqDiff += diff * diff;
+      }
+      this.realizedVol = Math.sqrt(sumSqDiff / this.recentPriceHistory.length) / this.ticker.tickSize;
+    }
+
     // 2. Liquidate or replenish competitor quotes around fair value
     this.maintainCompetitorLiquidity();
 
-    // 3. User MM Auto-quoting update (Avellaneda-Stoikov style inventory skew)
+    // 3. User MM Auto-quoting update (Multi-Strategy Quoting Engine)
     if (this.mmConfig.autoQuoting) {
       this.updateMarketMakerQuotes();
     }
@@ -292,10 +341,8 @@ export class MarketEngine {
       if (o.remainingSize <= 0) return false;
       const dist = Math.abs(o.price - mid) / tick;
       if (dist > 25) return false;
-      // Inverted logic
       if (o.side === 'BUY' && o.price >= mid + 3 * tick) return false;
       if (o.side === 'SELL' && o.price <= mid - 3 * tick) return false;
-      // Random cancellation of 5% of competitor orders per step
       if (Math.random() < 0.05) return false;
       return true;
     });
@@ -338,73 +385,140 @@ export class MarketEngine {
     }
   }
 
-  // Avellaneda-Stoikov Market Maker Quote Generation
+  // Multi-Strategy Market Maker Quote Generation Engine
   private updateMarketMakerQuotes() {
     const tick = this.ticker.tickSize;
     const inv = this.mmStats.inventory;
-    
-    // Inventory Skew:
-    // If long inventory (inv > 0), MM wants to sell, so reservation price lowers -> bid lower, ask lower
-    // If short inventory (inv < 0), MM wants to buy, reservation price rises -> bid higher, ask higher
-    const skewTicks = Math.round(inv * this.mmConfig.inventorySkewFactor / this.ticker.lotSize);
-    
-    const halfSpread = Math.max(1, this.mmConfig.halfSpreadTicks);
     const mid = this.roundTick(this.fairValue);
+    const book = this.getOrderBook(5);
 
-    // Reservation center price
-    const resPrice = this.roundTick(mid - skewTicks * tick);
+    // Cancel all previous automated user quotes
+    for (const qId of this.userQuoteIds) {
+      this.cancelOrder(qId);
+    }
+    this.userQuoteIds = [];
 
-    let myBidPrice = this.roundTick(resPrice - halfSpread * tick);
-    let myAskPrice = this.roundTick(resPrice + halfSpread * tick);
+    const strategy = this.mmConfig.strategyType;
 
-    // Enforce minimum 1 tick spread so quotes never cross
-    if (myAskPrice <= myBidPrice) {
-      myAskPrice = this.roundTick(myBidPrice + tick);
+    // 1. Calculate Reservation Center Price & Half Spread depending on strategy
+    let resPrice = mid;
+    let effectiveHalfSpread = Math.max(1, this.mmConfig.halfSpreadTicks);
+
+    switch (strategy) {
+      case 'AVELLANEDA_STOIKOV': {
+        // Skew reservation price inversely proportional to inventory
+        const skewTicks = Math.round((inv * this.mmConfig.inventorySkewFactor) / this.ticker.lotSize);
+        resPrice = this.roundTick(mid - skewTicks * tick);
+        break;
+      }
+
+      case 'IMBALANCE_ALPHA': {
+        // Micro-price predictive skew based on Order Book Imbalance (I in [-1, +1])
+        const imb = book.imbalance;
+        const imbTicks = Math.round(imb * this.mmConfig.imbalanceSensitivity * 6);
+        const invSkew = Math.round((inv * this.mmConfig.inventorySkewFactor * 0.5) / this.ticker.lotSize);
+        resPrice = this.roundTick(mid + imbTicks * tick - invSkew * tick);
+        break;
+      }
+
+      case 'ADAPTIVE_VOL': {
+        // Expand spread dynamically during high realized volatility
+        const volMultiplier = 1 + (this.realizedVol / 2) * this.mmConfig.volMultiplier;
+        effectiveHalfSpread = Math.max(1, Math.round(this.mmConfig.halfSpreadTicks * volMultiplier));
+        const skewTicks = Math.round((inv * this.mmConfig.inventorySkewFactor) / this.ticker.lotSize);
+        resPrice = this.roundTick(mid - skewTicks * tick);
+        break;
+      }
+
+      case 'VWAP_MEAN_REVERSION': {
+        // Fade deviation from running VWAP
+        const vwapDiff = mid - this.vwap;
+        const vwapTicks = Math.round(vwapDiff / tick);
+        // If price is above VWAP, skew downwards to sell short; if below, skew upwards to buy
+        const meanRevTicks = Math.round(vwapTicks * 0.4);
+        const invSkew = Math.round((inv * this.mmConfig.inventorySkewFactor) / this.ticker.lotSize);
+        resPrice = this.roundTick(mid - meanRevTicks * tick - invSkew * tick);
+        break;
+      }
+
+      case 'MULTI_LEVEL_GRID':
+      default: {
+        const skewTicks = Math.round((inv * this.mmConfig.inventorySkewFactor) / this.ticker.lotSize);
+        resPrice = this.roundTick(mid - skewTicks * tick);
+        break;
+      }
     }
 
-    // Cancel previous user automated quotes
-    if (this.userQuoteIds.buyId) {
-      this.cancelOrder(this.userQuoteIds.buyId);
-      this.userQuoteIds.buyId = undefined;
-    }
-    if (this.userQuoteIds.sellId) {
-      this.cancelOrder(this.userQuoteIds.sellId);
-      this.userQuoteIds.sellId = undefined;
-    }
+    // 2. Place Quotes (Single Level vs Multi-Level Grid)
+    if (strategy === 'MULTI_LEVEL_GRID') {
+      const levels = Math.max(1, Math.min(4, this.mmConfig.gridLevels));
+      for (let i = 1; i <= levels; i++) {
+        const levelSpread = effectiveHalfSpread + (i - 1) * 2;
+        const buyP = this.roundTick(resPrice - levelSpread * tick);
+        const sellP = this.roundTick(resPrice + levelSpread * tick);
+        // Tiered sizing: Outer quotes have larger size
+        const levelSize = this.mmConfig.quoteSize * i;
 
-    // Place new MM quotes if within inventory limits
-    if (inv < this.mmConfig.maxInventory) {
-      const buyOrder = this.placeLimitOrder({
-        side: 'BUY',
-        price: myBidPrice,
-        size: this.mmConfig.quoteSize,
-        isUser: true,
-        participantType: 'USER_MM',
-      });
-      this.userQuoteIds.buyId = buyOrder.id;
-    }
+        if (inv < this.mmConfig.maxInventory) {
+          const buyOrd = this.placeLimitOrder({
+            side: 'BUY',
+            price: buyP,
+            size: levelSize,
+            isUser: true,
+            participantType: 'USER_MM',
+          });
+          this.userQuoteIds.push(buyOrd.id);
+        }
 
-    if (inv > -this.mmConfig.maxInventory) {
-      const sellOrder = this.placeLimitOrder({
-        side: 'SELL',
-        price: myAskPrice,
-        size: this.mmConfig.quoteSize,
-        isUser: true,
-        participantType: 'USER_MM',
-      });
-      this.userQuoteIds.sellId = sellOrder.id;
+        if (inv > -this.mmConfig.maxInventory) {
+          const sellOrd = this.placeLimitOrder({
+            side: 'SELL',
+            price: sellP,
+            size: levelSize,
+            isUser: true,
+            participantType: 'USER_MM',
+          });
+          this.userQuoteIds.push(sellOrd.id);
+        }
+      }
+    } else {
+      // Standard single 2-sided quoting
+      let myBidPrice = this.roundTick(resPrice - effectiveHalfSpread * tick);
+      let myAskPrice = this.roundTick(resPrice + effectiveHalfSpread * tick);
+
+      if (myAskPrice <= myBidPrice) {
+        myAskPrice = this.roundTick(myBidPrice + tick);
+      }
+
+      if (inv < this.mmConfig.maxInventory) {
+        const buyOrder = this.placeLimitOrder({
+          side: 'BUY',
+          price: myBidPrice,
+          size: this.mmConfig.quoteSize,
+          isUser: true,
+          participantType: 'USER_MM',
+        });
+        this.userQuoteIds.push(buyOrder.id);
+      }
+
+      if (inv > -this.mmConfig.maxInventory) {
+        const sellOrder = this.placeLimitOrder({
+          side: 'SELL',
+          price: myAskPrice,
+          size: this.mmConfig.quoteSize,
+          isUser: true,
+          participantType: 'USER_MM',
+        });
+        this.userQuoteIds.push(sellOrder.id);
+      }
     }
   }
 
   private simulateIncomingFlow() {
-    // Poisson arrival probability
-    // Order book imbalance dictates taker bias
     const book = this.getOrderBook();
-    const imbalance = book.imbalance; // between -1 and +1
+    const imbalance = book.imbalance;
 
-    // Baseline chance of market order hitting each step: ~45%
     if (Math.random() < 0.45) {
-      // Probability of BUY is biased by order book imbalance and market regime
       let buyProb = 0.5 + imbalance * 0.25;
       if (this.regime === 'BULL_RALLY') buyProb += 0.3;
       if (this.regime === 'FLASH_CRASH') buyProb -= 0.35;
@@ -412,11 +526,10 @@ export class MarketEngine {
       buyProb = Math.max(0.1, Math.min(0.9, buyProb));
       const side: OrderSide = Math.random() < buyProb ? 'BUY' : 'SELL';
       
-      // Order size
       let sizeMultiplier = 1;
       const rand = Math.random();
       if (rand > 0.92) {
-        sizeMultiplier = 4; // block trade
+        sizeMultiplier = 4;
       } else if (rand > 0.7) {
         sizeMultiplier = 2;
       }
@@ -434,8 +547,6 @@ export class MarketEngine {
     const inv = this.mmStats.inventory;
     if (inv === 0) return;
 
-    // To hedge a long position (+inv), sell market order
-    // To hedge a short position (-inv), buy market order
     const hedgeSide: OrderSide = inv > 0 ? 'SELL' : 'BUY';
     const hedgeAmount = Math.min(Math.abs(inv), this.ticker.lotSize * 2);
 
@@ -489,8 +600,6 @@ export class MarketEngine {
     let remainingToFill = size;
     const executedTrades: Trade[] = [];
 
-    // If taker is BUYing, they match against resting SELL (Ask) orders, lowest price first
-    // If taker is SELLing, they match against resting BUY (Bid) orders, highest price first
     if (side === 'BUY') {
       const asks = this.orders
         .filter((o) => o.side === 'SELL' && o.remainingSize > 0)
@@ -518,7 +627,6 @@ export class MarketEngine {
         this.processTrade(trade);
       }
     } else {
-      // side === 'SELL'
       const bids = this.orders
         .filter((o) => o.side === 'BUY' && o.remainingSize > 0)
         .sort((a, b) => b.price - a.price || a.timestamp - b.timestamp);
@@ -549,30 +657,29 @@ export class MarketEngine {
     // Clean up filled orders
     this.orders = this.orders.filter((o) => o.remainingSize > 0);
 
-    // If user's automated quote was consumed, clear its reference so new one can be placed
-    if (this.userQuoteIds.buyId && !this.orders.some((o) => o.id === this.userQuoteIds.buyId)) {
-      this.userQuoteIds.buyId = undefined;
-    }
-    if (this.userQuoteIds.sellId && !this.orders.some((o) => o.id === this.userQuoteIds.sellId)) {
-      this.userQuoteIds.sellId = undefined;
-    }
-
     return executedTrades;
   }
 
   private processTrade(trade: Trade) {
     this.lastTradePrice = trade.price;
     this.trades.unshift(trade);
-    if (this.trades.length > 100) {
+    if (this.trades.length > 120) {
       this.trades.pop();
     }
 
-    // Market impact: nudge fair value slightly in the direction of the trade
+    // Update VWAP
+    this.cumVolume += trade.size;
+    this.cumPriceVolume += trade.price * trade.size;
+    if (this.cumVolume > 0) {
+      this.vwap = this.cumPriceVolume / this.cumVolume;
+    }
+
+    // Market impact
     const impactDirection = trade.takerSide === 'BUY' ? 1 : -1;
     const impactAmount = (trade.size / this.ticker.lotSize) * this.ticker.tickSize * 0.15;
     this.fairValue += impactDirection * impactAmount;
 
-    // Process user inventory & PnL if user participated
+    // Process user inventory, PnL, fees & rebates
     if (trade.isUserTrade && trade.userSide) {
       this.handleUserFill(trade);
     }
@@ -583,34 +690,49 @@ export class MarketEngine {
     const size = trade.size;
     const price = trade.price;
     const oldInv = this.mmStats.inventory;
+    const fillValue = price * size;
 
     this.mmStats.tradesCount += 1;
     this.mmStats.userFillsCount += 1;
     this.mmStats.volumeTraded += size;
 
+    // Fee & Rebate Model
+    // Makers earn +0.005% rebate from the exchange; Takers pay 0.015% fee
     if (trade.userRole === 'MAKER') {
-      // Maker captured the spread!
-      const spreadCaptured = (this.ticker.tickSize * this.mmConfig.halfSpreadTicks) * size;
+      const rebate = fillValue * 0.00005;
+      this.mmStats.makerRebates += rebate;
+      trade.feeOrRebate = rebate;
+
+      // Captured half-spread
+      const spreadCaptured = this.ticker.tickSize * this.mmConfig.halfSpreadTicks * size;
       this.mmStats.spreadCaptured += spreadCaptured;
+    } else {
+      const fee = fillValue * 0.00015;
+      this.mmStats.takerFees += fee;
+      trade.feeOrRebate = -fee;
     }
+    this.mmStats.netRebates = this.mmStats.makerRebates - this.mmStats.takerFees;
 
     if (side === 'BUY') {
-      this.mmStats.cash -= price * size;
+      this.mmStats.cash -= fillValue;
       const newInv = oldInv + size;
 
       if (oldInv >= 0) {
-        // Adding to long position
         const totalOldCost = oldInv * this.mmStats.avgCost;
         const addedCost = size * price;
         this.mmStats.avgCost = (totalOldCost + addedCost) / newInv;
       } else {
-        // Covering short position -> realize PnL
         const coveredSize = Math.min(Math.abs(oldInv), size);
         const pnl = (this.mmStats.avgCost - price) * coveredSize;
         this.mmStats.realizedPnL += pnl;
 
+        if (pnl > 0) {
+          this.mmStats.profitableTrades += 1;
+        } else if (pnl < 0) {
+          this.mmStats.losingTrades += 1;
+        }
+
         if (newInv > 0) {
-          // Flipped from short to long
           this.mmStats.avgCost = price;
         } else if (newInv === 0) {
           this.mmStats.avgCost = 0;
@@ -619,28 +741,37 @@ export class MarketEngine {
       this.mmStats.inventory = newInv;
     } else {
       // side === 'SELL'
-      this.mmStats.cash += price * size;
+      this.mmStats.cash += fillValue;
       const newInv = oldInv - size;
 
       if (oldInv <= 0) {
-        // Adding to short position
         const totalOldCost = Math.abs(oldInv) * this.mmStats.avgCost;
         const addedCost = size * price;
         this.mmStats.avgCost = (totalOldCost + addedCost) / Math.abs(newInv);
       } else {
-        // Closing long position -> realize PnL
         const closedSize = Math.min(oldInv, size);
         const pnl = (price - this.mmStats.avgCost) * closedSize;
         this.mmStats.realizedPnL += pnl;
 
+        if (pnl > 0) {
+          this.mmStats.profitableTrades += 1;
+        } else if (pnl < 0) {
+          this.mmStats.losingTrades += 1;
+        }
+
         if (newInv < 0) {
-          // Flipped from long to short
           this.mmStats.avgCost = price;
         } else if (newInv === 0) {
           this.mmStats.avgCost = 0;
         }
       }
       this.mmStats.inventory = newInv;
+    }
+
+    // Update Win Rate %
+    const totalClosed = this.mmStats.profitableTrades + this.mmStats.losingTrades;
+    if (totalClosed > 0) {
+      this.mmStats.winRate = (this.mmStats.profitableTrades / totalClosed) * 100;
     }
   }
 
@@ -658,15 +789,38 @@ export class MarketEngine {
       this.mmStats.unrealizedPnL = 0;
     }
 
-    this.mmStats.totalPnL = this.mmStats.realizedPnL + this.mmStats.unrealizedPnL;
+    this.mmStats.totalPnL =
+      this.mmStats.realizedPnL + this.mmStats.unrealizedPnL + this.mmStats.netRebates;
 
-    // Record PnL history every few steps
+    // Peak PnL and Max Drawdown calculation
+    if (this.mmStats.totalPnL > this.mmStats.peakPnL) {
+      this.mmStats.peakPnL = this.mmStats.totalPnL;
+    }
+    const currentDrawdown = this.mmStats.peakPnL - this.mmStats.totalPnL;
+    if (currentDrawdown > this.mmStats.maxDrawdown) {
+      this.mmStats.maxDrawdown = currentDrawdown;
+    }
+
+    // PnL History & Sharpe Ratio estimation
     const now = Date.now();
     const lastRec = this.mmStats.pnlHistory[this.mmStats.pnlHistory.length - 1];
     if (!lastRec || now - lastRec.time >= 1000) {
       this.mmStats.pnlHistory.push({ time: now, pnl: this.mmStats.totalPnL });
       if (this.mmStats.pnlHistory.length > 120) {
         this.mmStats.pnlHistory.shift();
+      }
+
+      // Calculate Sharpe Ratio across pnl deltas
+      if (this.mmStats.pnlHistory.length >= 10) {
+        const returns: number[] = [];
+        for (let i = 1; i < this.mmStats.pnlHistory.length; i++) {
+          returns.push(this.mmStats.pnlHistory[i].pnl - this.mmStats.pnlHistory[i - 1].pnl);
+        }
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const variance =
+          returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+        const stdDev = Math.sqrt(variance);
+        this.mmStats.sharpeRatio = stdDev > 0.01 ? (mean / stdDev) * Math.sqrt(252 * 6.5 * 3600) : 0;
       }
     }
   }
@@ -680,7 +834,6 @@ export class MarketEngine {
       return;
     }
 
-    // New candle every 3 seconds for fast dynamic action
     if (now - this.currentCandle.time >= 3000) {
       this.candles.push({ ...this.currentCandle });
       if (this.candles.length > 80) {
@@ -752,7 +905,6 @@ export class MarketEngine {
       };
     });
 
-    // Calculate max depth for relative percentage bars
     const maxCumSize = Math.max(cumBidSize, cumAskSize, 1);
     bids.forEach((b) => (b.depthPercent = (b.cumulativeSize / maxCumSize) * 100));
     asks.forEach((a) => (a.depthPercent = (a.cumulativeSize / maxCumSize) * 100));

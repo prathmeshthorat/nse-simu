@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import type { Candle, Trade, TickerInfo } from "../types/market";
-import { BarChart2, TrendingUp, Zap } from "lucide-react";
+import type { Candle, Trade, TickerInfo, OrderBook } from "../types/market";
+import { BarChart2, TrendingUp, Zap, Activity } from "lucide-react";
+import { DepthChart } from "./DepthChart";
 
 interface ChartProps {
   candles: Candle[];
@@ -10,6 +11,7 @@ interface ChartProps {
   userAskPrice?: number;
   trades: Trade[];
   ticker: TickerInfo;
+  orderBook: OrderBook;
 }
 
 export const Chart: React.FC<ChartProps> = ({
@@ -20,10 +22,11 @@ export const Chart: React.FC<ChartProps> = ({
   userAskPrice,
   trades,
   ticker,
+  orderBook,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [chartType, setChartType] = useState<"candles" | "line">("candles");
+  const [chartType, setChartType] = useState<"candles" | "line" | "depth">("candles");
   const [showFairValue, setShowFairValue] = useState(true);
   const [showQuotes, setShowQuotes] = useState(true);
   const [hoverData, setHoverData] = useState<{
@@ -421,7 +424,7 @@ export const Chart: React.FC<ChartProps> = ({
             <button
               onClick={() => setChartType("line")}
               title="Switch chart view to continuous Line & gradient area chart"
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                 chartType === "line"
                   ? "bg-indigo-600 text-white"
                   : "text-slate-400 hover:text-white"
@@ -430,38 +433,54 @@ export const Chart: React.FC<ChartProps> = ({
               <TrendingUp className="w-3 h-3" />
               Line
             </button>
+            <button
+              onClick={() => setChartType("depth")}
+              title="Switch to cumulative Market Depth Mountain visualization"
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                chartType === "depth"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Activity className="w-3 h-3" />
+              Depth
+            </button>
           </div>
 
-          {/* Indicators Toggle */}
-          <button
-            onClick={() => setShowFairValue(!showFairValue)}
-            title="Toggle latent theoretical Fair Value line (dashed gold)"
-            className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors ${
-              showFairValue
-                ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                : "text-slate-500 border-transparent hover:text-slate-300"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            Fair Value
-          </button>
+          {/* Indicators Toggle (Only for candle/line view) */}
+          {chartType !== 'depth' && (
+            <>
+              <button
+                onClick={() => setShowFairValue(!showFairValue)}
+                title="Toggle latent theoretical Fair Value line (dashed gold)"
+                className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
+                  showFairValue
+                    ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                    : "text-slate-500 border-transparent hover:text-slate-300"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                Fair Value
+              </button>
 
-          <button
-            onClick={() => setShowQuotes(!showQuotes)}
-            title="Toggle Market Maker Limit Bid (green) and Ask (red) quote bands on the chart"
-            className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors ${
-              showQuotes
-                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-                : "text-slate-500 border-transparent hover:text-slate-300"
-            }`}
-          >
-            <Zap className="w-3 h-3 text-emerald-400" />
-            MM Quotes
-          </button>
+              <button
+                onClick={() => setShowQuotes(!showQuotes)}
+                title="Toggle Market Maker Limit Bid (green) and Ask (red) quote bands on the chart"
+                className={`px-2 py-1 rounded text-[11px] font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
+                  showQuotes
+                    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                    : "text-slate-500 border-transparent hover:text-slate-300"
+                }`}
+              >
+                <Zap className="w-3 h-3 text-emerald-400" />
+                MM Quotes
+              </button>
+            </>
+          )}
         </div>
 
         {/* OHLC Bar */}
-        {latestCandle && (
+        {latestCandle && chartType !== 'depth' && (
           <div className="hidden lg:flex items-center gap-3 font-mono text-[11px] text-slate-300">
             <span>
               O:{" "}
@@ -494,14 +513,18 @@ export const Chart: React.FC<ChartProps> = ({
         )}
       </div>
 
-      {/* Canvas Area */}
+      {/* Main Display Area (Canvas or DepthChart) */}
       <div className="relative flex-1 w-full min-h-[340px]">
-        <canvas
-          ref={canvasRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="absolute inset-0 w-full h-full cursor-crosshair block"
-        />
+        {chartType === 'depth' ? (
+          <DepthChart book={orderBook} ticker={ticker} />
+        ) : (
+          <canvas
+            ref={canvasRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="absolute inset-0 w-full h-full cursor-crosshair block"
+          />
+        )}
       </div>
 
       {/* Bottom Legend */}

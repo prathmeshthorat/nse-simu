@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { MarketEngine, NSE_TICKERS } from "./simulation/marketEngine";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MarketEngine, NSE_TICKERS } from './simulation/marketEngine';
 import type {
   TickerInfo,
   OrderBook as OrderBookType,
@@ -9,54 +9,45 @@ import type {
   MarketMakerStats,
   MarketRegime,
   OrderSide,
-} from "./types/market";
-import { Header } from "./components/Header";
-import { Chart } from "./components/Chart";
-import { OrderBook } from "./components/OrderBook";
-import { MarketMakerTerminal } from "./components/MarketMakerTerminal";
-import { TimeAndSales } from "./components/TimeAndSales";
-import { ScenarioBar } from "./components/ScenarioBar";
-import { EducationalModal } from "./components/EducationalModal";
+} from './types/market';
+import { Header } from './components/Header';
+import { Chart } from './components/Chart';
+import { OrderBook } from './components/OrderBook';
+import { MarketMakerTerminal } from './components/MarketMakerTerminal';
+import { TimeAndSales } from './components/TimeAndSales';
+import { ScenarioBar } from './components/ScenarioBar';
+import { EducationalModal } from './components/EducationalModal';
+import { AnalyticsModal } from './components/AnalyticsModal';
+import { playFillSound, playShockSound, setSoundMuted, getSoundMuted } from './utils/audio';
 
 export const App: React.FC = () => {
-  const [currentTicker, setCurrentTicker] = useState<TickerInfo>(
-    NSE_TICKERS.RELIANCE,
-  );
-  const engineRef = useRef<MarketEngine>(
-    new MarketEngine(NSE_TICKERS.RELIANCE),
-  );
+  const [currentTicker, setCurrentTicker] = useState<TickerInfo>(NSE_TICKERS.RELIANCE);
+  const engineRef = useRef<MarketEngine>(new MarketEngine(NSE_TICKERS.RELIANCE));
 
   // Simulation controls
   const [isRunning, setIsRunning] = useState<boolean>(true);
   const [speed, setSpeed] = useState<number>(1);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => getSoundMuted());
 
   // Live state snapshots
-  const [lastPrice, setLastPrice] = useState<number>(
-    NSE_TICKERS.RELIANCE.initialPrice,
-  );
-  const [dayHigh, setDayHigh] = useState<number>(
-    NSE_TICKERS.RELIANCE.dailyHigh,
-  );
+  const [lastPrice, setLastPrice] = useState<number>(NSE_TICKERS.RELIANCE.initialPrice);
+  const [dayHigh, setDayHigh] = useState<number>(NSE_TICKERS.RELIANCE.dailyHigh);
   const [dayLow, setDayLow] = useState<number>(NSE_TICKERS.RELIANCE.dailyLow);
   const [totalVol, setTotalVol] = useState<number>(124500);
 
-  const [orderBook, setOrderBook] = useState<OrderBookType>(() =>
-    engineRef.current.getOrderBook(),
-  );
+  const [orderBook, setOrderBook] = useState<OrderBookType>(() => engineRef.current.getOrderBook());
   const [candles, setCandles] = useState<Candle[]>([]);
   const [currentCandle, setCurrentCandle] = useState<Candle | null>(null);
-  const [fairValue, setFairValue] = useState<number>(
-    NSE_TICKERS.RELIANCE.initialPrice,
-  );
+  const [fairValue, setFairValue] = useState<number>(NSE_TICKERS.RELIANCE.initialPrice);
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [mmConfig, setMmConfig] = useState<MarketMakerConfig>(
-    engineRef.current.mmConfig,
-  );
-  const [mmStats, setMmStats] = useState<MarketMakerStats>(
-    engineRef.current.mmStats,
-  );
-  const [currentRegime, setCurrentRegime] = useState<MarketRegime>("NORMAL");
+  const [mmConfig, setMmConfig] = useState<MarketMakerConfig>(engineRef.current.mmConfig);
+  const [mmStats, setMmStats] = useState<MarketMakerStats>(engineRef.current.mmStats);
+  const [currentRegime, setCurrentRegime] = useState<MarketRegime>('NORMAL');
+
+  // Track user fill count to trigger audio sound effects
+  const prevFillCountRef = useRef<number>(0);
 
   // Selected price from order book for manual ticket
   const [selectedBookPrice, setSelectedBookPrice] = useState<{
@@ -76,23 +67,28 @@ export const App: React.FC = () => {
     setCandles([...engine.candles]);
     setCurrentCandle(engine.currentCandle ? { ...engine.currentCandle } : null);
     setTrades([...engine.trades]);
-    setMmStats({
-      ...engine.mmStats,
-      pnlHistory: [...engine.mmStats.pnlHistory],
-    });
+    setMmStats({ ...engine.mmStats, pnlHistory: [...engine.mmStats.pnlHistory] });
     setMmConfig({ ...engine.mmConfig });
     setCurrentRegime(engine.regime);
 
     setDayHigh((prev) => Math.max(prev, price));
     setDayLow((prev) => Math.min(prev, price));
     setTotalVol((prev) => prev + (engine.trades[0]?.size || 0));
+
+    // Audio cue check for user fills
+    if (engine.mmStats.userFillsCount > prevFillCountRef.current) {
+      const latestUserTrade = engine.trades.find((t) => t.isUserTrade);
+      if (latestUserTrade && latestUserTrade.userSide) {
+        playFillSound(latestUserTrade.userSide);
+      }
+      prevFillCountRef.current = engine.mmStats.userFillsCount;
+    }
   }, []);
 
   // Main simulation tick loop
   useEffect(() => {
     if (!isRunning) return;
 
-    // Simulation tick frequency in milliseconds based on speed multiplier
     const baseIntervalMs = 120;
     const intervalMs = Math.max(20, Math.floor(baseIntervalMs / speed));
 
@@ -108,6 +104,7 @@ export const App: React.FC = () => {
   const handleSelectTicker = (ticker: TickerInfo) => {
     setCurrentTicker(ticker);
     engineRef.current.setTicker(ticker);
+    prevFillCountRef.current = 0;
     setDayHigh(ticker.dailyHigh);
     setDayLow(ticker.dailyLow);
     setTotalVol(Math.floor(Math.random() * 50000) + 50000);
@@ -117,6 +114,7 @@ export const App: React.FC = () => {
   // Reset simulation
   const handleReset = () => {
     engineRef.current = new MarketEngine(currentTicker);
+    prevFillCountRef.current = 0;
     setDayHigh(currentTicker.dailyHigh);
     setDayLow(currentTicker.dailyLow);
     syncFromEngine();
@@ -131,27 +129,35 @@ export const App: React.FC = () => {
     setMmConfig({ ...engineRef.current.mmConfig });
   };
 
+  // Audio Toggle
+  const handleToggleMute = () => {
+    const nextMute = !isMuted;
+    setIsMuted(nextMute);
+    setSoundMuted(nextMute);
+  };
+
   // Place manual order from ticket
   const handlePlaceManualOrder = (
     side: OrderSide,
-    type: "LIMIT" | "MARKET",
+    type: 'LIMIT' | 'MARKET',
     price: number,
-    size: number,
+    size: number
   ) => {
-    if (type === "MARKET") {
+    if (type === 'MARKET') {
       engineRef.current.executeMarketOrder({
         side,
         size,
-        participantType: "USER_MM",
+        participantType: 'USER_MM',
         isUser: true,
       });
+      playFillSound(side);
     } else {
       engineRef.current.placeLimitOrder({
         side,
         price,
         size,
         isUser: true,
-        participantType: "USER_MM",
+        participantType: 'USER_MM',
       });
     }
     syncFromEngine();
@@ -161,13 +167,14 @@ export const App: React.FC = () => {
   const handleFlattenPosition = () => {
     const inv = engineRef.current.mmStats.inventory;
     if (inv === 0) return;
-    const hedgeSide: OrderSide = inv > 0 ? "SELL" : "BUY";
+    const hedgeSide: OrderSide = inv > 0 ? 'SELL' : 'BUY';
     engineRef.current.executeMarketOrder({
       side: hedgeSide,
       size: Math.abs(inv),
-      participantType: "USER_MM",
+      participantType: 'USER_MM',
       isUser: true,
     });
+    playFillSound(hedgeSide);
     syncFromEngine();
   };
 
@@ -175,10 +182,14 @@ export const App: React.FC = () => {
   const handleSetRegime = (regime: MarketRegime) => {
     engineRef.current.setRegime(regime);
     setCurrentRegime(regime);
+    if (regime === 'FLASH_CRASH' || regime === 'HIGH_VOLATILITY') {
+      playShockSound();
+    }
   };
 
   const handleTriggerWhale = (side: OrderSide) => {
     engineRef.current.triggerWhaleOrder(side, 8);
+    playShockSound();
     syncFromEngine();
   };
 
@@ -208,13 +219,16 @@ export const App: React.FC = () => {
         onChangeSpeed={setSpeed}
         onReset={handleReset}
         onOpenGuide={() => setIsGuideOpen(true)}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
       />
 
       {/* Main Trading Floor Grid */}
       <main className="flex-1 p-3 grid grid-cols-1 xl:grid-cols-12 gap-3 max-w-[1920px] mx-auto w-full">
         {/* Left Area: Chart & Market Maker Terminal (7 Cols) */}
         <div className="xl:col-span-7 flex flex-col gap-3">
-          {/* Real-time Candlestick & Tick Chart */}
+          {/* Real-time Candlestick, Line & Depth Chart */}
           <div className="h-[400px] lg:h-[430px]">
             <Chart
               candles={candles}
@@ -224,6 +238,7 @@ export const App: React.FC = () => {
               userAskPrice={userAsk}
               trades={trades}
               ticker={currentTicker}
+              orderBook={orderBook}
             />
           </div>
 
@@ -249,9 +264,7 @@ export const App: React.FC = () => {
             <OrderBook
               book={orderBook}
               ticker={currentTicker}
-              onSelectPrice={(price, side) =>
-                setSelectedBookPrice({ price, side })
-              }
+              onSelectPrice={(price, side) => setSelectedBookPrice({ price, side })}
             />
           </div>
 
@@ -272,9 +285,15 @@ export const App: React.FC = () => {
       </footer>
 
       {/* Educational Guide Modal */}
-      <EducationalModal
-        isOpen={isGuideOpen}
-        onClose={() => setIsGuideOpen(false)}
+      <EducationalModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+
+      {/* Quantitative Analytics & Scorecard Modal */}
+      <AnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        stats={mmStats}
+        ticker={currentTicker}
+        trades={trades}
       />
     </div>
   );

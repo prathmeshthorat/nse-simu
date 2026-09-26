@@ -2,6 +2,13 @@ export type OrderSide = 'BUY' | 'SELL';
 
 export type OrderType = 'LIMIT' | 'MARKET';
 
+export type StrategyType =
+  | 'AVELLANEDA_STOIKOV'
+  | 'IMBALANCE_ALPHA'
+  | 'ADAPTIVE_VOL'
+  | 'MULTI_LEVEL_GRID'
+  | 'VWAP_MEAN_REVERSION';
+
 export interface Order {
   id: string;
   side: OrderSide;
@@ -22,6 +29,7 @@ export interface Trade {
   isUserTrade: boolean;
   userSide?: OrderSide;
   userRole?: 'MAKER' | 'TAKER';
+  feeOrRebate?: number;
 }
 
 export interface OrderBookLevel {
@@ -58,6 +66,7 @@ export interface Candle {
 }
 
 export interface MarketMakerConfig {
+  strategyType: StrategyType;
   autoQuoting: boolean;
   halfSpreadTicks: number; // ticks away from fair value/mid
   quoteSize: number; // shares per quote
@@ -66,6 +75,9 @@ export interface MarketMakerConfig {
   autoHedge: boolean; // market hedge when inventory exceeds threshold
   hedgeThreshold: number;
   cancelReplaceFreqMs: number; // algorithmic quote refresh rate
+  gridLevels: number; // for MULTI_LEVEL_GRID (e.g. 1 to 4 levels)
+  volMultiplier: number; // for ADAPTIVE_VOL
+  imbalanceSensitivity: number; // for IMBALANCE_ALPHA
 }
 
 export interface MarketMakerStats {
@@ -79,6 +91,15 @@ export interface MarketMakerStats {
   userFillsCount: number;
   volumeTraded: number;
   spreadCaptured: number;
+  makerRebates: number; // +0.005% rebate on maker volume
+  takerFees: number; // -0.015% fee on taker volume (hedges/manual market)
+  netRebates: number;
+  maxDrawdown: number;
+  peakPnL: number;
+  winRate: number; // percentage of profitable closed trades
+  profitableTrades: number;
+  losingTrades: number;
+  sharpeRatio: number;
   pnlHistory: { time: number; pnl: number }[];
 }
 
